@@ -542,8 +542,8 @@
       background: white;
       font-weight: 400;
       text-align: center;
-      min-width: 72px;
-      width: 72px;
+      min-width: 88px;
+      width: 88px;
       border-bottom: 1px solid #e0e0e0;
       cursor: pointer;
     }
@@ -672,8 +672,8 @@
 
     /* Data cells */
     .rt-table .rt-cell {
-      width: 72px;
-      min-width: 72px;
+      width: 88px;
+      min-width: 88px;
       text-align: right;
       padding-right: 16px;
       padding-left: 8px;
@@ -695,6 +695,8 @@
     tr.rt-hov > td.rt-sel-col.rt-sel-col-bot { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 -2px 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.06); }
     /* Selected + cell hover */
     td.rt-sel-col.rt-cell-hov            { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.14) !important; }
+
+    .rt-cur { color: #9fa8ad; }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
@@ -7837,7 +7839,12 @@
                 if (di === selectedCol) overrideInputToFocus = inp;
                 td.appendChild(inp);
               } else {
-                td.textContent = dbVal(row, hotelId, selId, di, d);
+                var val = dbVal(row, hotelId, selId, di, d);
+                if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
+                  td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
+                } else {
+                  td.textContent = val;
+                }
               }
               if (di === selectedCol) { td.classList.add('rt-sel-col'); lastSelColTd = td; }
               colCells[di] = colCells[di] || [];
