@@ -517,21 +517,23 @@
       box-sizing: border-box;
     }
 
-    /* Sticky header rows */
+    /* Sticky header rows — z-index 2 so the label column (z-index 3) clips them on horizontal scroll */
     .rt-head-month th {
       position: sticky;
       top: 0;
-      z-index: 3;
+      z-index: 2;
       background: white;
       font-weight: 700;
       font-size: 14px;
       border-bottom: 1px solid #e0e0e0;
+      overflow: visible;
+      white-space: nowrap;
     }
 
     .rt-head-day th {
       position: sticky;
       top: 32px;
-      z-index: 3;
+      z-index: 2;
       background: white;
       font-weight: 400;
       text-align: center;
@@ -540,11 +542,19 @@
       border-bottom: 1px solid #e0e0e0;
     }
 
-    /* Sticky label column */
+    /* Month label sticks to the left edge of its visible cell area */
+    .rt-head-month .month-label {
+      position: sticky;
+      left: 240px;
+      padding-left: 12px;
+      display: inline-block;
+    }
+
+    /* Sticky label column — z-index 3 so it clips over scrolling header cells */
     .rt-lc {
       position: sticky;
       left: 0;
-      z-index: 2;
+      z-index: 3;
       width: 240px;
       min-width: 240px;
       background: white;
@@ -570,11 +580,11 @@
 
     /* Section header row */
     .rt-section td { background: #dde1e2; border-right: none; }
-    .rt-section .rt-lc { background: #dde1e2; z-index: 2; }
+    .rt-section .rt-lc { background: #dde1e2; z-index: 3; }
 
     /* Subsection header row */
     .rt-subsection td { background: #eaeeef; border-right: none; }
-    .rt-subsection .rt-lc { background: #eaeeef; z-index: 2; }
+    .rt-subsection .rt-lc { background: #eaeeef; z-index: 3; }
 
     /* Label cell inner layout */
     .rt-label-inner {
@@ -7523,9 +7533,10 @@
         months.forEach(function(m) {
           var mth = document.createElement('th');
           mth.colSpan = m.count;
-          mth.textContent = m.label;
-          mth.style.textAlign = 'left';
-          mth.style.paddingLeft = '12px';
+          var lbl = document.createElement('span');
+          lbl.className = 'month-label';
+          lbl.textContent = m.label;
+          mth.appendChild(lbl);
           mr.appendChild(mth);
         });
         thead.appendChild(mr);
