@@ -330,8 +330,165 @@
       flex: 1;
       min-width: 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       overflow: hidden;
+    }
+
+    /* ─── MAIN CONTENT 3-PANEL ────────────────────────── */
+    .mc-wrap {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: white;
+    }
+
+    .mc-left-nav {
+      width: 192px;
+      min-width: 120px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 0 8px 8px;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .mc-nav-selector-wrap { flex-shrink: 0; padding-right: 8px; }
+
+    .mc-nav-selector-box { position: relative; width: 100%; }
+
+    .mc-nav-select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 6px 28px 6px 8px;
+      font-size: 14px;
+      font-family: 'Lato', sans-serif;
+      color: #1c1c1c;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .mc-nav-select-arrow {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      color: #1c1c1c;
+      pointer-events: none;
+    }
+
+    .mc-nav-tree-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      border: 1px solid var(--grey-300);
+      border-radius: 4px;
+      padding: 4px 0;
+      background: white;
+    }
+
+    .nav-tree-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px 4px 0;
+      font-size: 12px;
+      font-family: 'Lato', sans-serif;
+      color: #1c1c1c;
+      user-select: none;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    .nav-tree-item.leaf { cursor: pointer; }
+
+    .nav-tree-item.selected {
+      background: #d7f7ed;
+      border-right: 4px solid #248b86;
+      padding-right: 4px;
+    }
+
+    .nav-tree-item.expandable:hover { background: var(--grey-50); }
+    .nav-tree-item.leaf:not(.selected):hover { background: var(--grey-200); }
+
+    .nav-tree-item .nt-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      color: #1c1c1c;
+    }
+
+    .nav-tree-item .nt-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-tree-item.bold .nt-label { font-weight: 700; }
+
+    .mc-resize-handle {
+      width: 3px;
+      flex-shrink: 0;
+      cursor: col-resize;
+      background: var(--grey-300);
+      transition: background 0.12s;
+    }
+
+    .mc-resize-handle:hover,
+    .mc-resize-handle.dragging { background: var(--blue-500); }
+
+    .mc-table-area {
+      flex: 1;
+      min-width: 0;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mc-table-placeholder {
+      font-size: 14px;
+      color: black;
+      pointer-events: none;
+    }
+
+    .mc-charts-panel {
+      width: 320px;
+      min-width: 180px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 8px 8px 0;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .mc-chart-box {
+      flex: 1;
+      min-height: 0;
+      border: 1px solid var(--grey-300);
+      border-radius: 4px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .mc-chart-placeholder {
+      font-size: 14px;
+      font-style: italic;
+      color: #1c1c1c;
+      text-align: center;
     }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
@@ -2282,9 +2439,45 @@
   <!-- ══════════════ MAIN ══════════════ -->
   <div class="main-layout">
     <div class="content-area">
+      <div class="mc-wrap">
 
-      <!-- content area intentionally empty -->
+        <!-- Left nav -->
+        <div class="mc-left-nav" id="mc-left-nav">
+          <div class="mc-nav-selector-wrap">
+            <div class="mc-nav-selector-box">
+              <select class="mc-nav-select" id="mc-nav-select">
+                <option value="segments" selected>Segments</option>
+                <option value="room-types" disabled>Room Types</option>
+                <option value="summary" disabled>Summary</option>
+              </select>
+              <span class="material-icons-round mc-nav-select-arrow">arrow_drop_down</span>
+            </div>
+          </div>
+          <div class="mc-nav-tree-wrap" id="mc-nav-tree"></div>
+        </div>
 
+        <!-- Resize handle: left -->
+        <div class="mc-resize-handle" id="mc-resize-left"></div>
+
+        <!-- Table area -->
+        <div class="mc-table-area" id="mc-table-area">
+          <span class="mc-table-placeholder">TABLE PLACEHOLDER</span>
+        </div>
+
+        <!-- Resize handle: right -->
+        <div class="mc-resize-handle" id="mc-resize-right"></div>
+
+        <!-- Charts panel -->
+        <div class="mc-charts-panel" id="mc-charts-panel">
+          <div class="mc-chart-box">
+            <span class="mc-chart-placeholder">Cumulative Booking Curve placeholder</span>
+          </div>
+          <div class="mc-chart-box">
+            <span class="mc-chart-placeholder">Optimal Rate Finder placeholder</span>
+          </div>
+        </div>
+
+      </div>
     </div><!-- /content-area -->
 
     <!-- ══════════════ RIGHT SIDE PANEL ══════════════ -->
@@ -6840,5 +7033,191 @@
   // ═════════════════════════════════════════════════════════════════════════════
 }());
 </script>
+  <script>
+    /* ── Tree navigation + resize ─────────────────────────────────── */
+    (function() {
+      var INDENT = [4, 24, 44, 64];
+      var selectedId = 'hbcn-t-r-bar';
+
+      var tree = [
+        { id:'hbcn', label:'Hotel Barcelona', bold:true, expanded:true, children:[
+          { id:'hbcn-t', label:'Transient', expanded:true, children:[
+            { id:'hbcn-t-r', label:'Retail', expanded:true, children:[
+              { id:'hbcn-t-r-bar', label:'BAR/Leisure', leaf:true },
+              { id:'hbcn-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
+              { id:'hbcn-t-r-ota', label:'OTA Retail', leaf:true }
+            ]},
+            { id:'hbcn-t-d', label:'Discount', expanded:false, children:[
+              { id:'hbcn-t-d-bar', label:'BAR Discount', leaf:true },
+              { id:'hbcn-t-d-mem', label:'Member Discount', leaf:true }
+            ]},
+            { id:'hbcn-t-n', label:'Negotiated', expanded:false, children:[
+              { id:'hbcn-t-n-corp', label:'Corporate Negotiated', leaf:true },
+              { id:'hbcn-t-n-govt', label:'Government Rate', leaf:true }
+            ]}
+          ]},
+          { id:'hbcn-g', label:'Group', expanded:false, children:[
+            { id:'hbcn-g-short', label:'Groups - Short Stay', leaf:true },
+            { id:'hbcn-g-long', label:'Groups - Long Stay', leaf:true },
+            { id:'hbcn-g-meet', label:'Meetings', leaf:true }
+          ]},
+          { id:'hbcn-c', label:'Contract', expanded:false, children:[
+            { id:'hbcn-c-corp', label:'Corporate Contracted', leaf:true },
+            { id:'hbcn-c-pref', label:'Preferred Partner', leaf:true }
+          ]},
+          { id:'hbcn-o', label:'Other Rooms Revenue', expanded:false, children:[
+            { id:'hbcn-o-day', label:'Day Use', leaf:true },
+            { id:'hbcn-o-pkg', label:'Packages', leaf:true }
+          ]}
+        ]},
+        { id:'hcam', label:'Hotel Cambridge', bold:true, expanded:false, children:[
+          { id:'hcam-t', label:'Transient', expanded:false, children:[
+            { id:'hcam-t-r', label:'Retail', expanded:false, children:[
+              { id:'hcam-t-r-bar', label:'BAR/Leisure', leaf:true },
+              { id:'hcam-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
+              { id:'hcam-t-r-ota', label:'OTA Retail', leaf:true }
+            ]},
+            { id:'hcam-t-d', label:'Discount', expanded:false, children:[
+              { id:'hcam-t-d-bar', label:'BAR Discount', leaf:true },
+              { id:'hcam-t-d-mem', label:'Member Discount', leaf:true }
+            ]},
+            { id:'hcam-t-n', label:'Negotiated', expanded:false, children:[
+              { id:'hcam-t-n-corp', label:'Corporate Negotiated', leaf:true },
+              { id:'hcam-t-n-govt', label:'Government Rate', leaf:true }
+            ]}
+          ]},
+          { id:'hcam-g', label:'Group', expanded:false, children:[
+            { id:'hcam-g-short', label:'Groups - Short Stay', leaf:true },
+            { id:'hcam-g-long', label:'Groups - Long Stay', leaf:true },
+            { id:'hcam-g-meet', label:'Meetings', leaf:true }
+          ]},
+          { id:'hcam-c', label:'Contract', expanded:false, children:[
+            { id:'hcam-c-corp', label:'Corporate Contracted', leaf:true },
+            { id:'hcam-c-pref', label:'Preferred Partner', leaf:true }
+          ]},
+          { id:'hcam-o', label:'Other Rooms Revenue', expanded:false, children:[
+            { id:'hcam-o-day', label:'Day Use', leaf:true },
+            { id:'hcam-o-pkg', label:'Packages', leaf:true }
+          ]}
+        ]},
+        { id:'hdub', label:'Hotel Dublin', bold:true, expanded:false, children:[
+          { id:'hdub-t', label:'Transient', expanded:false, children:[
+            { id:'hdub-t-r', label:'Retail', expanded:false, children:[
+              { id:'hdub-t-r-bar', label:'BAR/Leisure', leaf:true },
+              { id:'hdub-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
+              { id:'hdub-t-r-ota', label:'OTA Retail', leaf:true }
+            ]},
+            { id:'hdub-t-d', label:'Discount', expanded:false, children:[
+              { id:'hdub-t-d-bar', label:'BAR Discount', leaf:true },
+              { id:'hdub-t-d-mem', label:'Member Discount', leaf:true }
+            ]},
+            { id:'hdub-t-n', label:'Negotiated', expanded:false, children:[
+              { id:'hdub-t-n-corp', label:'Corporate Negotiated', leaf:true },
+              { id:'hdub-t-n-govt', label:'Government Rate', leaf:true }
+            ]}
+          ]},
+          { id:'hdub-g', label:'Group', expanded:false, children:[
+            { id:'hdub-g-short', label:'Groups - Short Stay', leaf:true },
+            { id:'hdub-g-long', label:'Groups - Long Stay', leaf:true },
+            { id:'hdub-g-meet', label:'Meetings', leaf:true }
+          ]},
+          { id:'hdub-c', label:'Contract', expanded:false, children:[
+            { id:'hdub-c-corp', label:'Corporate Contracted', leaf:true },
+            { id:'hdub-c-pref', label:'Preferred Partner', leaf:true }
+          ]},
+          { id:'hdub-o', label:'Other Rooms Revenue', expanded:false, children:[
+            { id:'hdub-o-day', label:'Day Use', leaf:true },
+            { id:'hdub-o-pkg', label:'Packages', leaf:true }
+          ]}
+        ]}
+      ];
+
+      function renderNodes(container, nodes, depth) {
+        nodes.forEach(function(node) {
+          var pad = INDENT[depth] !== undefined ? INDENT[depth] : (4 + depth * 20);
+          var div = document.createElement('div');
+          div.className = 'nav-tree-item' +
+            (node.leaf ? ' leaf' : ' expandable') +
+            (node.bold ? ' bold' : '') +
+            (node.id === selectedId ? ' selected' : '');
+          div.style.paddingLeft = pad + 'px';
+
+          if (!node.leaf) {
+            var icon = document.createElement('span');
+            icon.className = 'material-icons-round nt-icon';
+            icon.textContent = node.expanded ? 'expand_more' : 'chevron_right';
+            div.appendChild(icon);
+          }
+
+          var lbl = document.createElement('span');
+          lbl.className = 'nt-label';
+          lbl.textContent = node.label;
+          div.appendChild(lbl);
+
+          if (node.leaf) {
+            div.addEventListener('click', function() {
+              selectedId = node.id;
+              redraw();
+            });
+          } else {
+            div.addEventListener('click', function() {
+              node.expanded = !node.expanded;
+              redraw();
+            });
+          }
+
+          container.appendChild(div);
+
+          if (!node.leaf && node.expanded && node.children) {
+            renderNodes(container, node.children, depth + 1);
+          }
+        });
+      }
+
+      function redraw() {
+        var c = document.getElementById('mc-nav-tree');
+        if (!c) return;
+        c.innerHTML = '';
+        renderNodes(c, tree, 0);
+      }
+
+      redraw();
+
+      /* ── Resize handles ─────────────────────────────── */
+      function initResize(handleEl, panelEl, side) {
+        handleEl.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          handleEl.classList.add('dragging');
+          var startX = e.clientX;
+          var startW = panelEl.offsetWidth;
+
+          function onMove(e) {
+            var dx = e.clientX - startX;
+            var w = side === 'left' ? startW + dx : startW - dx;
+            var min = side === 'left' ? 120 : 180;
+            var max = side === 'left' ? 400 : 600;
+            panelEl.style.width = Math.max(min, Math.min(max, w)) + 'px';
+          }
+
+          function onUp() {
+            handleEl.classList.remove('dragging');
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          }
+
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      var lNav = document.getElementById('mc-left-nav');
+      var lHandle = document.getElementById('mc-resize-left');
+      var cPanel = document.getElementById('mc-charts-panel');
+      var rHandle = document.getElementById('mc-resize-right');
+
+      if (lNav && lHandle) initResize(lHandle, lNav, 'left');
+      if (cPanel && rHandle) initResize(rHandle, cPanel, 'right');
+    })();
+  </script>
 </body>
 </html>
