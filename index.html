@@ -436,6 +436,15 @@
 
     .nav-tree-item.bold .nt-label { font-weight: 700; }
 
+    .nt-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #248b86;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+
     .mc-resize-handle {
       width: 3px;
       flex-shrink: 0;
@@ -7246,6 +7255,16 @@
         ]}
       ];
 
+      function containsSelected(node) {
+        if (node.leaf) return node.id === selectedId;
+        if (node.children) {
+          for (var i = 0; i < node.children.length; i++) {
+            if (containsSelected(node.children[i])) return true;
+          }
+        }
+        return false;
+      }
+
       function renderNodes(container, nodes, depth) {
         nodes.forEach(function(node) {
           var pad = INDENT[depth] !== undefined ? INDENT[depth] : (4 + depth * 20);
@@ -7267,6 +7286,12 @@
           lbl.className = 'nt-label';
           lbl.textContent = node.label;
           div.appendChild(lbl);
+
+          if (!node.leaf && !node.expanded && containsSelected(node)) {
+            var dot = document.createElement('span');
+            dot.className = 'nt-dot';
+            div.appendChild(dot);
+          }
 
           if (node.leaf) {
             div.addEventListener('click', function() {
