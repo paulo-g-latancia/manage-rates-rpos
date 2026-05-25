@@ -517,6 +517,9 @@
       box-sizing: border-box;
     }
 
+    .rt-row-emphasis td, .rt-row-emphasis th { height: 40px; }
+    .rt-row-secondary td { font-size: 12px; }
+
     /* Sticky header rows — z-index 2 so the label column (z-index 3) clips them on horizontal scroll */
     .rt-head-month th {
       position: sticky;
@@ -618,7 +621,7 @@
     .rt-label-inner {
       display: flex;
       align-items: center;
-      height: 32px;
+      height: 100%;
       overflow: hidden;
       padding-right: 8px;
     }
@@ -7633,8 +7636,11 @@
           if (!visible(row)) return;
           var tr = document.createElement('tr');
 
+          var EMPHASIS_LABELS = { 'BAR/Leisure': true, 'Current': true, 'Recommended': true, 'Override': true };
+          var emphasisClass = EMPHASIS_LABELS[row.lb] ? ' rt-row-emphasis' : ' rt-row-secondary';
+
           if (row.t === 'section') {
-            tr.className = 'rt-section';
+            tr.className = 'rt-section' + emphasisClass;
             tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
@@ -7643,7 +7649,7 @@
             dates.forEach(function() { tr.appendChild(document.createElement('td')); });
 
           } else if (row.t === 'subsection') {
-            tr.className = 'rt-subsection';
+            tr.className = 'rt-subsection rt-row-secondary';
             tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
@@ -7652,7 +7658,7 @@
             dates.forEach(function() { tr.appendChild(document.createElement('td')); });
 
           } else {
-            tr.className = 'rt-data';
+            tr.className = 'rt-data' + emphasisClass;
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
             lc.appendChild(makeLabelInner(row, build));
@@ -7662,7 +7668,7 @@
               var td = document.createElement('td');
               td.className = 'rt-cell';
               if (isOverride) {
-                td.style.padding = '4px 6px';
+                td.style.padding = '8px 6px';
                 var inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'rt-override-input';
