@@ -7631,6 +7631,7 @@
 
         /* TBODY */
         var tbody = document.createElement('tbody');
+        var stickyTop = 64; /* two 32px header rows */
 
         ROWS.forEach(function(row) {
           if (!visible(row)) return;
@@ -7693,6 +7694,26 @@
                 td.textContent = 'value';
               }
               tr.appendChild(td);
+            });
+          }
+
+          /* Sticky + divider logic applied after row is fully built */
+          if (EMPHASIS_LABELS[row.lb]) {
+            var rowTop = stickyTop;
+            Array.prototype.forEach.call(tr.children, function(cell) {
+              cell.style.position = 'sticky';
+              cell.style.top = rowTop + 'px';
+              cell.style.zIndex = cell.classList.contains('rt-lc') ? '4' : '2';
+              if (row.t !== 'section' && !cell.classList.contains('rt-lc')) {
+                cell.style.background = 'white';
+              }
+            });
+            stickyTop += 40;
+          }
+
+          if (row.lb === 'Override') {
+            Array.prototype.forEach.call(tr.children, function(cell) {
+              cell.style.borderBottom = '2px solid #9fa8ad';
             });
           }
 
