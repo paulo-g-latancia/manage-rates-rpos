@@ -7697,6 +7697,7 @@
       }
 
       var selectedCol = 0;
+      var focusOverrideAfterBuild = false;
 
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
@@ -7755,7 +7756,7 @@
           dth.className = isWknd(d) ? 'rt-wknd' : '';
           if (di === selectedCol) dth.classList.add('rt-sel-col');
           dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
-          dth.addEventListener('click', function() { selectedCol = di; build(); });
+          dth.addEventListener('click', function() { selectedCol = di; focusOverrideAfterBuild = true; build(); });
           colCells[di] = colCells[di] || [];
           colCells[di].push(dth);
           dr.appendChild(dth);
@@ -7769,6 +7770,7 @@
         var EMPHASIS_LABELS = { 'Current': true, 'Recommended': true, 'Override': true };
         EMPHASIS_LABELS[KM['bl'].lb] = true;
         var lastSelColTd = null;
+        var overrideInputToFocus = null;
 
         ROWS.forEach(function(row) {
           if (!visible(row)) return;
@@ -7827,6 +7829,7 @@
                 inp.addEventListener('focus', function() {
                   this.value = this.value.replace(/[^0-9.]/g, '');
                 });
+                if (di === selectedCol) overrideInputToFocus = inp;
                 td.appendChild(inp);
               } else {
                 td.textContent = dbVal(row, hotelId, selId, di, d);
@@ -7846,6 +7849,9 @@
               });
               td.addEventListener('mouseleave', function() {
                 this.classList.remove('rt-cell-hov');
+              });
+              td.addEventListener('click', function() {
+                if (selectedCol !== di) { selectedCol = di; focusOverrideAfterBuild = true; build(); }
               });
               tr.appendChild(td);
             });
@@ -7884,8 +7890,13 @@
           hovCol = -1;
         });
         wrap.appendChild(tbl);
+        if (focusOverrideAfterBuild) {
+          focusOverrideAfterBuild = false;
+          if (overrideInputToFocus) overrideInputToFocus.focus();
+        }
       }
 
+      focusOverrideAfterBuild = true;
       build();
       if (window.rposNav) window.rposNav.onSelectionChange = build;
     })();
