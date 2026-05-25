@@ -678,6 +678,13 @@
       padding-left: 8px;
     }
 
+    /* Hover states */
+    tr.rt-hov > td,
+    tr.rt-section:hover > td,
+    tr.rt-subsection:hover > td          { box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.025); }
+    th.rt-col-hov, td.rt-col-hov         { box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.025); }
+    td.rt-cell-hov                       { box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.06) !important; }
+
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
       display: flex;
@@ -7683,6 +7690,8 @@
         var hotelId = selId.split('-')[0];
         var dates = getDates();
         var months = groupMonths(dates);
+        var colCells = {};
+        var hovCol = -1;
         var wrap = document.getElementById('rt-wrap');
         if (!wrap) return;
         wrap.innerHTML = '';
@@ -7728,10 +7737,12 @@
         /* Day row — no corner cell (covered by rowspan above) */
         var dr = document.createElement('tr');
         dr.className = 'rt-head-day';
-        dates.forEach(function(d) {
+        dates.forEach(function(d, di) {
           var dth = document.createElement('th');
           dth.className = isWknd(d) ? 'rt-wknd' : '';
           dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
+          colCells[di] = colCells[di] || [];
+          colCells[di].push(dth);
           dr.appendChild(dth);
         });
         thead.appendChild(dr);
@@ -7769,6 +7780,8 @@
 
           } else {
             tr.className = 'rt-data' + emphasisClass;
+            tr.addEventListener('mouseenter', function() { this.classList.add('rt-hov'); });
+            tr.addEventListener('mouseleave', function() { this.classList.remove('rt-hov'); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
             lc.appendChild(makeLabelInner(row, build));
@@ -7802,6 +7815,21 @@
               } else {
                 td.textContent = dbVal(row, hotelId, selId, di, d);
               }
+              colCells[di] = colCells[di] || [];
+              colCells[di].push(td);
+              td.addEventListener('mouseenter', function() {
+                if (hovCol !== di) {
+                  if (hovCol >= 0 && colCells[hovCol]) {
+                    colCells[hovCol].forEach(function(c) { c.classList.remove('rt-col-hov'); });
+                  }
+                  hovCol = di;
+                  colCells[di].forEach(function(c) { c.classList.add('rt-col-hov'); });
+                }
+                this.classList.add('rt-cell-hov');
+              });
+              td.addEventListener('mouseleave', function() {
+                this.classList.remove('rt-cell-hov');
+              });
               tr.appendChild(td);
             });
           }
@@ -7830,6 +7858,12 @@
         });
 
         tbl.appendChild(tbody);
+        tbl.addEventListener('mouseleave', function() {
+          if (hovCol >= 0 && colCells[hovCol]) {
+            colCells[hovCol].forEach(function(c) { c.classList.remove('rt-col-hov'); });
+          }
+          hovCol = -1;
+        });
         wrap.appendChild(tbl);
       }
 
