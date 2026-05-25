@@ -7556,18 +7556,18 @@
             tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
-            lc.colSpan = dates.length + 1;
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
+            dates.forEach(function() { tr.appendChild(document.createElement('td')); });
 
           } else if (row.t === 'subsection') {
             tr.className = 'rt-subsection';
             tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
-            lc.colSpan = dates.length + 1;
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
+            dates.forEach(function() { tr.appendChild(document.createElement('td')); });
 
           } else {
             tr.className = 'rt-data';
