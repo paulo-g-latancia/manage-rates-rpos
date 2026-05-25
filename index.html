@@ -545,6 +545,7 @@
       min-width: 72px;
       width: 72px;
       border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
     }
 
     /* Month label sticks to the left edge of its visible cell area */
@@ -684,6 +685,16 @@
     tr.rt-subsection:hover > td          { box-shadow: inset 0 0 0 9999px rgba(36,139,134,0.06); }
     th.rt-col-hov, td.rt-col-hov         { box-shadow: inset 0 0 0 9999px rgba(36,139,134,0.06); }
     td.rt-cell-hov                       { box-shadow: inset 0 0 0 9999px rgba(36,139,134,0.14) !important; }
+
+    /* Selected column */
+    th.rt-sel-col                        { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 2px 0 #248b86; }
+    td.rt-sel-col                        { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86; }
+    td.rt-sel-col.rt-sel-col-bot         { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 -2px 0 #248b86; }
+    /* Selected + row hover */
+    tr.rt-hov > td.rt-sel-col            { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.06); }
+    tr.rt-hov > td.rt-sel-col.rt-sel-col-bot { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 -2px 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.06); }
+    /* Selected + cell hover */
+    td.rt-sel-col.rt-cell-hov            { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.14) !important; }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
@@ -7685,6 +7696,8 @@
         }
       }
 
+      var selectedCol = 0;
+
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
         var hotelId = selId.split('-')[0];
@@ -7740,7 +7753,9 @@
         dates.forEach(function(d, di) {
           var dth = document.createElement('th');
           dth.className = isWknd(d) ? 'rt-wknd' : '';
+          if (di === selectedCol) dth.classList.add('rt-sel-col');
           dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
+          dth.addEventListener('click', function() { selectedCol = di; build(); });
           colCells[di] = colCells[di] || [];
           colCells[di].push(dth);
           dr.appendChild(dth);
@@ -7753,6 +7768,7 @@
         var stickyTop = 64; /* two 32px header rows */
         var EMPHASIS_LABELS = { 'Current': true, 'Recommended': true, 'Override': true };
         EMPHASIS_LABELS[KM['bl'].lb] = true;
+        var lastSelColTd = null;
 
         ROWS.forEach(function(row) {
           if (!visible(row)) return;
@@ -7815,6 +7831,7 @@
               } else {
                 td.textContent = dbVal(row, hotelId, selId, di, d);
               }
+              if (di === selectedCol) { td.classList.add('rt-sel-col'); lastSelColTd = td; }
               colCells[di] = colCells[di] || [];
               colCells[di].push(td);
               td.addEventListener('mouseenter', function() {
@@ -7856,6 +7873,8 @@
 
           tbody.appendChild(tr);
         });
+
+        if (lastSelColTd) lastSelColTd.classList.add('rt-sel-col-bot');
 
         tbl.appendChild(tbody);
         tbl.addEventListener('mouseleave', function() {
