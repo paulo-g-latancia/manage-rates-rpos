@@ -28,6 +28,7 @@
 
     html, body {
       height: 100%;
+      overflow: hidden;
       font-family: 'Lato', sans-serif;
       font-size: 14px;
       color: var(--text-primary);
@@ -37,7 +38,8 @@
     .page-wrapper {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     /* ─── TOP NAV ─────────────────────────────────────── */
@@ -2114,6 +2116,211 @@
     .ct-toast.ct-visible .ct-toast-bar {
       animation: ct-drain 5s linear forwards;
     }
+
+    /* ─── RPOS LAYOUT v2 ─────────────────────────────────────────────────── */
+    header { position: sticky; top: 0; z-index: 100; }
+
+    /* ─── LEFT NAV PANEL ─────────────────────────────────────────────────── */
+    .left-nav-panel {
+      width: 220px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--grey-300);
+      background: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .nav-tree-header {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--grey-300);
+      flex-shrink: 0;
+    }
+    .nav-tree-select {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--grey-300);
+      border-radius: 4px;
+      padding: 0 28px 0 10px;
+      font-size: 13px;
+      font-family: 'Lato', sans-serif;
+      color: var(--text-primary);
+      appearance: none;
+      -webkit-appearance: none;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%234F5B60' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 6px center;
+      cursor: pointer;
+    }
+    .nav-tree-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      min-height: 28px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tree-item:hover { background: var(--grey-50); }
+    .tree-item.tree-hotel { font-weight: 700; }
+    .tree-item.selected {
+      background: #E6F4F3;
+      color: var(--blue-700);
+      font-weight: 700;
+    }
+    .tree-item .tree-icon {
+      font-size: 16px;
+      color: var(--text-sec);
+      flex-shrink: 0;
+      width: 18px;
+    }
+    .tree-indent-1 { padding-left: 16px; }
+    .tree-indent-2 { padding-left: 32px; }
+    .tree-indent-3 { padding-left: 48px; }
+
+    /* ─── CENTER TABLE AREA ───────────────────────────────────────────────── */
+    .center-area {
+      flex: 1;
+      min-width: 0;
+      overflow: auto;
+    }
+    .rates-new-table {
+      border-collapse: collapse;
+      width: max-content;
+      font-size: 12px;
+    }
+    .rates-new-table th,
+    .rates-new-table td {
+      padding: 0;
+      border-right: 1px solid var(--grey-200);
+      border-bottom: 1px solid var(--grey-200);
+    }
+
+    /* Sticky label column */
+    .tc-label {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: white;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+    }
+
+    /* Month header row */
+    .tr-months th { position: sticky; top: 0; z-index: 2; }
+    .tr-months .tc-label { z-index: 5; background: white; border-bottom: none; border-right: none; }
+    .tc-month {
+      background: var(--grey-50);
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sec);
+      text-align: left;
+      height: 26px;
+    }
+
+    /* Date header row */
+    .tr-dates th { position: sticky; top: 26px; z-index: 2; background: white; }
+    .tr-dates .tc-label { z-index: 5; background: white; }
+    .tc-date {
+      width: 60px;
+      min-width: 60px;
+      text-align: center;
+      padding: 4px 2px;
+      height: 38px;
+    }
+    .tc-date .dn { display: block; font-size: 10px; color: var(--text-sec); }
+    .tc-date .dd { display: block; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .tc-today-hdr { background: #EEF8F7 !important; }
+    .tc-today-hdr .dd { color: var(--blue-700); }
+
+    /* Section header rows */
+    .tr-section .tc-label {
+      background: #EAEEEF;
+      cursor: pointer;
+    }
+    .tr-section td { background: #EAEEEF; }
+    .tr-section .tc-inner {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px 5px 6px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .sec-arrow {
+      font-size: 16px;
+      color: var(--text-sec);
+      flex-shrink: 0;
+      transition: transform 0.15s;
+      cursor: pointer;
+    }
+    .tr-section.sec-collapsed .sec-arrow { transform: rotate(-90deg); }
+
+    /* Subsection header rows */
+    .tr-subsection .tc-label { background: #F4F6F7; cursor: pointer; }
+    .tr-subsection td { background: #F4F6F7; }
+    .tr-subsection .tc-inner {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px 4px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sec);
+    }
+    .tr-subsection .sec-arrow { font-size: 14px; }
+    .tr-subsection.sec-collapsed .sec-arrow { transform: rotate(-90deg); }
+
+    /* Data rows */
+    .tr-data .tc-label { font-size: 12px; }
+    .tr-data .tc-inner { padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tc-inner-i1 { padding-left: 24px !important; }
+    .tc-inner-i2 { padding-left: 40px !important; }
+    .tc-val {
+      width: 60px;
+      min-width: 60px;
+      text-align: center;
+      padding: 4px 2px;
+      font-size: 11px;
+      color: #AABABA;
+    }
+    .tc-today-val { background: #EEF8F7; }
+    .tr-override .tc-label { background: #FAFAFA; }
+    .tr-override .tc-val { background: #FAFAFA; color: #CCC; }
+    .tr-override.tc-today-val { background: #F0F8F7; }
+
+    /* ─── RIGHT CHART PANEL ───────────────────────────────────────────────── */
+    .right-chart-panel {
+      width: 320px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--grey-300);
+      background: white;
+      overflow: hidden;
+    }
+    .chart-ph {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: var(--text-sec);
+      font-style: italic;
+    }
+    .chart-ph + .chart-ph { border-top: 1px solid var(--grey-300); }
+
   </style>
 </head>
 <body>
@@ -2257,207 +2464,79 @@
 
   <!-- ══════════════ MAIN ══════════════ -->
   <div class="main-layout">
-    <div class="content-area">
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <button class="btn-add-filters">
-          <span class="material-icons-round mi">add</span>
-          Add Filters
-        </button>
-        <span class="filter-empty">No filters applied</span>
+    <!-- ─── Left navigation tree ─── -->
+    <div class="left-nav-panel">
+      <div class="nav-tree-header">
+        <select class="nav-tree-select">
+          <option selected>Segments</option>
+          <option>Room Types</option>
+          <option>Summary</option>
+        </select>
       </div>
+      <div class="nav-tree-body">
 
-      <!-- Tabs + Navigation -->
-      <div class="tabs-bar">
-        <div class="tabs">
-          <div class="tab active">Segments</div>
-          <div class="tab">Room Types</div>
-          <div class="tab">Summary</div>
+        <!-- Hotel Barcelona (expanded) -->
+        <div class="tree-item tree-hotel" data-tree-toggle="hotel-bcn">
+          <span class="material-icons-round tree-icon">expand_more</span>Hotel Barcelona
         </div>
-        <div class="tabs-right">
-          <label class="toggle-row">
-            <label class="toggle">
-              <input type="checkbox" />
-              <span class="toggle-slider"></span>
-            </label>
-            Use current for room type calculations
-          </label>
-          <div class="nav-dates">
-            <button class="nav-date-btn">
-              <span class="material-icons-round mi">chevron_left</span>
-              Previous 7 days
-            </button>
-            <button class="nav-date-btn">
-              Next 7 days
-              <span class="material-icons-round mi">chevron_right</span>
-            </button>
+        <div id="hotel-bcn-children">
+          <div class="tree-item tree-indent-1" data-tree-toggle="transient">
+            <span class="material-icons-round tree-icon">expand_more</span>Transient
           </div>
+          <div id="transient-children">
+            <div class="tree-item tree-indent-2" data-tree-toggle="retail">
+              <span class="material-icons-round tree-icon">expand_more</span>Retail
+            </div>
+            <div id="retail-children">
+              <div class="tree-item tree-indent-3 selected">BAR/Leisure</div>
+              <div class="tree-item tree-indent-3">Loyalty Retail Disco...</div>
+              <div class="tree-item tree-indent-3">OTA Retail</div>
+            </div>
+            <div class="tree-item tree-indent-2" data-tree-toggle="negotiated">
+              <span class="material-icons-round tree-icon">chevron_right</span>Negotiated
+            </div>
+            <div id="negotiated-children" style="display:none"></div>
+          </div>
+          <div class="tree-item tree-indent-1" data-tree-toggle="grp">
+            <span class="material-icons-round tree-icon">chevron_right</span>Group
+          </div>
+          <div id="grp-children" style="display:none"></div>
+          <div class="tree-item tree-indent-1" data-tree-toggle="contract">
+            <span class="material-icons-round tree-icon">chevron_right</span>Contract
+          </div>
+          <div id="contract-children" style="display:none"></div>
+          <div class="tree-item tree-indent-1" data-tree-toggle="other-rev">
+            <span class="material-icons-round tree-icon">chevron_right</span>Other Rooms Revenue
+          </div>
+          <div id="other-rev-children" style="display:none"></div>
         </div>
+
+        <!-- Hotel Cambridge (collapsed) -->
+        <div class="tree-item tree-hotel" data-tree-toggle="hotel-cam">
+          <span class="material-icons-round tree-icon">chevron_right</span>Hotel Cambridge
+        </div>
+        <div id="hotel-cam-children" style="display:none"></div>
+
+        <!-- Hotel Dublin (collapsed) -->
+        <div class="tree-item tree-hotel" data-tree-toggle="hotel-dub">
+          <span class="material-icons-round tree-icon">chevron_right</span>Hotel Dublin
+        </div>
+        <div id="hotel-dub-children" style="display:none"></div>
+
       </div>
+    </div>
 
-      <!-- Data Table -->
-      <div class="table-wrapper">
-        <table class="rates-table" id="rates-table">
-          <thead>
+    <!-- ─── Center: rates table ─── -->
+    <div class="center-area">
+      <table class="rates-new-table" id="rates-new-table"></table>
+    </div>
 
-            <!-- ── Level 1: Section groups ── -->
-            <tr class="group-row">
-              <th rowspan="3" class="td-date section-end" style="text-align:left;vertical-align:middle;z-index:2;background:var(--grey-50);">
-                Stay Date
-              </th>
-              <th colspan="10" class="section-end">
-                <div class="group-header-inner">
-                  BAR
-                  <span class="material-icons-round mi">open_in_new</span>
-                </div>
-              </th>
-              <th colspan="10" class="section-end">
-                <div class="group-header-inner">Segment 2</div>
-              </th>
-            </tr>
-
-            <!-- ── Level 2: Room types ── -->
-            <tr class="room-type-row">
-              <!-- BAR room types -->
-              <th colspan="2">
-                <div class="room-type-inner">Deluxe King <span class="chip">B1</span> <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Queen <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Suite 1 <span class="chip">B2</span> <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Suite 2 <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2" class="section-end">
-                <div class="room-type-inner">Suite 3 <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <!-- Segment 2 room types -->
-              <th colspan="2">
-                <div class="room-type-inner">Deluxe King <span class="chip">B1</span> <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Queen <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Suite 1 <span class="chip">B2</span> <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2">
-                <div class="room-type-inner">Suite 2 <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-              <th colspan="2" class="section-end">
-                <div class="room-type-inner">Suite 3 <span class="material-icons-round mi">chevron_right</span></div>
-              </th>
-            </tr>
-
-            <!-- ── Level 3: Sub-columns (Recommended / Current Rate × 10 pairs) ── -->
-            <tr class="sub-row" id="sub-header-row"></tr>
-
-          </thead>
-          <tbody id="table-body"></tbody>
-        </table>
-      </div><!-- /table-wrapper -->
-
-      <script>
-        // ── Sub-header row: 10 pairs of Recommended | Current Rate ──────────
-        (function() {
-          const subRow = document.getElementById('sub-header-row');
-          for (let g = 0; g < 2; g++) {
-            for (let r = 0; r < 5; r++) {
-              const isLast = r === 4;
-              ['Recommended', 'Current Rate'].forEach((label, i) => {
-                const th = document.createElement('th');
-                th.textContent = label;
-                if (isLast && i === 1) th.classList.add('section-end');
-                subRow.appendChild(th);
-              });
-            }
-          }
-        })();
-
-        // ── Table data ───────────────────────────────────────────────────────
-        // Each row: { date, alert, bar: [[rec,cur]×5], seg2: [[rec,cur]×5] }
-        const rows = [
-          { date:'Mon, 3/16', alert:'none',
-            bar:  [[210.00,210.00],[145.00,145.00],[340.00,340.00],[305.00,305.00],[420.00,420.00]],
-            seg2: [[200.00,210.00],[140.00,140.00],[340.00,340.00],[305.00,315.00],[420.00,435.00]] },
-          { date:'Tue, 3/17', alert:'none',
-            bar:  [[215.00,215.00],[148.00,148.00],[345.00,345.00],[310.00,310.00],[425.00,425.00]],
-            seg2: [[205.00,215.00],[143.00,143.00],[345.00,345.00],[310.00,320.00],[425.00,440.00]] },
-          { date:'Wed, 3/18', alert:'none',
-            bar:  [[218.00,218.00],[150.00,150.00],[348.00,348.00],[312.00,312.00],[428.00,428.00]],
-            seg2: [[208.00,218.00],[145.00,145.00],[348.00,348.00],[312.00,322.00],[428.00,443.00]] },
-          { date:'Thu, 3/19', alert:'none',
-            bar:  [[220.00,220.00],[152.00,152.00],[350.00,350.00],[315.00,315.00],[430.00,430.00]],
-            seg2: [[210.00,220.00],[147.00,147.00],[350.00,350.00],[315.00,325.00],[430.00,445.00]] },
-          { date:'Fri, 3/20', alert:'unread',
-            bar:  [[189.00,189.00],[157.66,157.66],[320.00,320.00],[285.00,285.00],[395.00,395.00]],
-            seg2: [[180.00,189.00],[152.00,152.00],[320.00,320.00],[285.00,295.00],[395.00,410.00]] },
-          { date:'Sat, 3/21', alert:'unread',
-            bar:  [[219.00,219.00],[162.00,162.00],[355.00,355.00],[318.00,318.00],[435.00,435.00]],
-            seg2: [[209.00,219.00],[157.00,157.00],[355.00,355.00],[318.00,328.00],[435.00,450.00]] },
-          { date:'Sun, 3/22', alert:'none',
-            bar:  [[205.00,205.00],[148.00,148.00],[338.00,338.00],[302.00,302.00],[415.00,415.00]],
-            seg2: [[195.00,205.00],[143.00,143.00],[338.00,338.00],[302.00,312.00],[415.00,430.00]] },
-        ];
-
-        const fmt = n => '€' + n.toFixed(2);
-
-        const tbody = document.getElementById('table-body');
-        rows.forEach(row => {
-          const tr = document.createElement('tr');
-
-          // Stay Date cell
-          const tdDate = document.createElement('td');
-          tdDate.className = 'td-date';
-          const pillDate = row.date.split(', ')[1];
-          tdDate.innerHTML = `
-            <div class="date-cell-inner">
-              <span class="date-label">${row.date}</span>
-              <div class="alert-pill ${row.alert}" data-pill-date="${pillDate}">
-                ${row.alert !== 'none' ? '<span class="material-icons-round mi">auto_awesome</span>' : ''}
-              </div>
-            </div>`;
-          tr.appendChild(tdDate);
-
-          // BAR + Segment 2 columns
-          [row.bar, row.seg2].forEach((group, gi) => {
-            group.forEach(([rec, cur], ri) => {
-              const isLastRoom = ri === 4;
-
-              // Recommended
-              const tdRec = document.createElement('td');
-              tdRec.textContent = fmt(rec);
-              tr.appendChild(tdRec);
-
-              // Current Rate
-              const tdCur = document.createElement('td');
-              tdCur.textContent = fmt(cur);
-              if (cur > rec) tdCur.classList.add('pos');
-              if (isLastRoom) tdCur.classList.add('section-end');
-              tr.appendChild(tdCur);
-            });
-          });
-
-          tbody.appendChild(tr);
-        });
-      </script>
-
-    </div><!-- /content-area -->
-
-    <!-- ══════════════ RIGHT SIDE PANEL ══════════════ -->
-    <aside class="side-panel">
-      <button class="sp-btn" data-tooltip="Metrics Calendar">
-        <span class="material-icons-round mi">calendar_today</span>
-      </button>
-      <button class="sp-btn" id="ai-btn" data-tooltip="AI Assistant">
-        <span class="material-icons-round mi">auto_awesome</span>
-        <span class="sp-badge" id="alerts-badge">2</span>
-      </button>
-    </aside>
+    <!-- ─── Right: chart placeholders ─── -->
+    <div class="right-chart-panel">
+      <div class="chart-ph">Cumulative Booking Curve placeholder</div>
+      <div class="chart-ph">Optimal Rate Finder placeholder</div>
+    </div>
 
     <!-- ══════════════ ALERTS SIDE PANEL ══════════════ -->
     <div class="alerts-panel" id="alerts-panel" aria-hidden="true">
@@ -3145,7 +3224,7 @@
   });
 
   /* ── spark/insight pill clicks in main table ─── */
-  document.getElementById('rates-table').addEventListener('click', function (e) {
+  (document.getElementById('rates-table') || document.createElement('div')).addEventListener('click', function (e) {
     var pill = e.target.closest('.alert-pill');
     if (!pill || pill.classList.contains('none')) return;
     e.stopPropagation(); // prevent the outside-click handler from closing the panel
@@ -6999,6 +7078,223 @@
   /* ── Prevent panel close on internal clicks ── */
   aiPanel.addEventListener('click', function (e) { e.stopPropagation(); });
   // ═════════════════════════════════════════════════════════════════════════════
+}());
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RPOS TABLE & NAV TREE
+   ════════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var TODAY     = new Date(2026, 4, 25); // May 25 2026
+  var NUM_DAYS  = 30;
+  var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON_NAMES = ['January','February','March','April','May','June',
+                   'July','August','September','October','November','December'];
+
+  /* ── generate dates ─────────────────────────────────────────────────── */
+  var dates = [];
+  for (var i = 0; i < NUM_DAYS; i++) {
+    var d = new Date(TODAY);
+    d.setDate(TODAY.getDate() + i);
+    dates.push(d);
+  }
+
+  /* ── group by month ─────────────────────────────────────────────────── */
+  var monthGroups = [];
+  var curGrp = null;
+  dates.forEach(function (d) {
+    var key = d.getFullYear() * 100 + d.getMonth();
+    if (!curGrp || curGrp.key !== key) {
+      curGrp = { key: key, month: d.getMonth(), year: d.getFullYear(), count: 0 };
+      monthGroups.push(curGrp);
+    }
+    curGrp.count++;
+  });
+
+  /* ── table data model ───────────────────────────────────────────────── */
+  var ROWS = [
+    { t:'section',    id:'s-bar',       label:'BAR/Leisure' },
+    { t:'data',       label:'Current',              indent:1, sec:'s-bar' },
+    { t:'data',       label:'Recommended',           indent:1, sec:'s-bar' },
+    { t:'data',       label:'Override',              indent:1, sec:'s-bar', cls:'tr-override' },
+    { t:'subsection', id:'ss-rt',       label:'Room Types',          sec:'s-bar' },
+    { t:'data',       label:'Standard Queen',        indent:2, sec:'s-bar', ss:'ss-rt' },
+    { t:'data',       label:'Standard King',         indent:2, sec:'s-bar', ss:'ss-rt' },
+    { t:'data',       label:'Double',                indent:2, sec:'s-bar', ss:'ss-rt' },
+    { t:'data',       label:'Junior Suite',          indent:2, sec:'s-bar', ss:'ss-rt' },
+    { t:'subsection', id:'ss-rc',       label:'Rooms Commit',         sec:'s-bar' },
+    { t:'data',       label:'BAR',                   indent:2, sec:'s-bar', ss:'ss-rc' },
+    { t:'data',       label:'STLY',                  indent:2, sec:'s-bar', ss:'ss-rc' },
+    { t:'subsection', id:'ss-rp',       label:'Revenue & Profit',     sec:'s-bar' },
+    { t:'data',       label:'Room Revenue',           indent:2, sec:'s-bar', ss:'ss-rp' },
+    { t:'data',       label:'Cost of Acquisition',   indent:2, sec:'s-bar', ss:'ss-rp' },
+    { t:'data',       label:'Net Room Revenue',       indent:2, sec:'s-bar', ss:'ss-rp' },
+    { t:'data',       label:'Net ADR',                indent:2, sec:'s-bar', ss:'ss-rp' },
+    { t:'data',       label:'Net RevPAR',             indent:2, sec:'s-bar', ss:'ss-rp' },
+
+    { t:'section',    id:'s-hd',        label:'Hotel Data' },
+    { t:'subsection', id:'ss-df',       label:'Duetto Forecast',      sec:'s-hd' },
+    { t:'data',       label:'Room Nights',            indent:2, sec:'s-hd', ss:'ss-df' },
+    { t:'data',       label:'%',                      indent:2, sec:'s-hd', ss:'ss-df' },
+    { t:'subsection', id:'ss-do',       label:'Demand Occupancy',     sec:'s-hd' },
+    { t:'data',       label:'Room Nights',            indent:2, sec:'s-hd', ss:'ss-do' },
+    { t:'data',       label:'%',                      indent:2, sec:'s-hd', ss:'ss-do' },
+    { t:'data',       label:'Out of Order Rooms',     indent:1, sec:'s-hd' },
+    { t:'data',       label:'Remaining Rooms',        indent:1, sec:'s-hd' },
+    { t:'data',       label:'Booking.com Rate',       indent:1, sec:'s-hd' },
+    { t:'subsection', id:'ss-comp',     label:'Competitors',          sec:'s-hd' },
+    { t:'data',       label:'Low',                    indent:2, sec:'s-hd', ss:'ss-comp' },
+    { t:'data',       label:'Average',                indent:2, sec:'s-hd', ss:'ss-comp' },
+    { t:'data',       label:'High',                   indent:2, sec:'s-hd', ss:'ss-comp' },
+    { t:'subsection', id:'ss-rs',       label:'Rate Shop',             sec:'s-hd' },
+    { t:'data',       label:'Hotel Mirasol',           indent:2, sec:'s-hd', ss:'ss-rs' },
+    { t:'data',       label:'Maritim proArte Barcelo...', indent:2, sec:'s-hd', ss:'ss-rs' },
+    { t:'data',       label:'Kempinski Hotel Barcelo...', indent:2, sec:'s-hd', ss:'ss-rs' },
+  ];
+
+  /* expanded state — all start open */
+  var exp = {};
+  ROWS.forEach(function (r) {
+    if (r.t === 'section' || r.t === 'subsection') exp[r.id] = true;
+  });
+
+  function visible(r) {
+    if (r.t === 'section') return true;
+    if (r.t === 'subsection') return exp[r.sec] !== false;
+    if (r.t === 'data') {
+      if (exp[r.sec] === false) return false;
+      if (r.ss && exp[r.ss] === false) return false;
+      return true;
+    }
+    return true;
+  }
+
+  function mk(tag, cls) {
+    var el = document.createElement(tag);
+    if (cls) el.className = cls;
+    return el;
+  }
+
+  /* ── build / rebuild table ──────────────────────────────────────────── */
+  function buildTable() {
+    var tbl = document.getElementById('rates-new-table');
+    if (!tbl) return;
+    tbl.innerHTML = '';
+
+    /* thead */
+    var thead = mk('thead');
+
+    /* row 1: months */
+    var trM = mk('tr', 'tr-months');
+    var thC1 = mk('th', 'tc-label');
+    trM.appendChild(thC1);
+    monthGroups.forEach(function (g) {
+      var th = mk('th', 'tc-month');
+      th.colSpan = g.count;
+      th.textContent = MON_NAMES[g.month] + ', ' + g.year;
+      trM.appendChild(th);
+    });
+    thead.appendChild(trM);
+
+    /* row 2: dates */
+    var trD = mk('tr', 'tr-dates');
+    var thC2 = mk('th', 'tc-label');
+    trD.appendChild(thC2);
+    dates.forEach(function (d, i) {
+      var th = mk('th', 'tc-date' + (i === 0 ? ' tc-today-hdr' : ''));
+      th.innerHTML = '<span class="dn">' + DAY_NAMES[d.getDay()] + '</span>'
+                   + '<span class="dd">' + d.getDate() + '</span>';
+      trD.appendChild(th);
+    });
+    thead.appendChild(trD);
+    tbl.appendChild(thead);
+
+    /* tbody */
+    var tbody = mk('tbody');
+    ROWS.forEach(function (row) {
+      if (!visible(row)) return;
+      var tr = mk('tr');
+
+      if (row.t === 'section') {
+        tr.className = 'tr-section' + (exp[row.id] === false ? ' sec-collapsed' : '');
+        tr.dataset.secId = row.id;
+        var tdL = mk('td', 'tc-label');
+        tdL.innerHTML = '<div class="tc-inner"><span class="material-icons-round sec-arrow">expand_more</span>'
+                      + '<span>' + row.label + '</span></div>';
+        tr.appendChild(tdL);
+        for (var i = 0; i < NUM_DAYS; i++) tr.appendChild(mk('td'));
+
+      } else if (row.t === 'subsection') {
+        tr.className = 'tr-subsection' + (exp[row.id] === false ? ' sec-collapsed' : '');
+        tr.dataset.ssId  = row.id;
+        tr.dataset.secId = row.sec;
+        var tdL = mk('td', 'tc-label');
+        tdL.innerHTML = '<div class="tc-inner"><span class="material-icons-round sec-arrow">expand_more</span>'
+                      + '<span>' + row.label + '</span></div>';
+        tr.appendChild(tdL);
+        for (var i = 0; i < NUM_DAYS; i++) tr.appendChild(mk('td'));
+
+      } else {
+        tr.className = 'tr-data' + (row.cls ? ' ' + row.cls : '');
+        var tdL = mk('td', 'tc-label');
+        var indCls = row.indent === 2 ? 'tc-inner-i2' : 'tc-inner-i1';
+        tdL.innerHTML = '<div class="tc-inner ' + indCls + '">' + row.label + '</div>';
+        tr.appendChild(tdL);
+        for (var i = 0; i < NUM_DAYS; i++) {
+          var td = mk('td', 'tc-val' + (i === 0 ? ' tc-today-val' : ''));
+          td.textContent = 'value';
+          tr.appendChild(td);
+        }
+      }
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+
+    /* attach toggle events */
+    tbl.querySelectorAll('.tr-section .tc-label').forEach(function (lbl) {
+      lbl.addEventListener('click', function () {
+        var id = lbl.closest('tr').dataset.secId;
+        exp[id] = !exp[id];
+        buildTable();
+      });
+    });
+    tbl.querySelectorAll('.tr-subsection .tc-label').forEach(function (lbl) {
+      lbl.addEventListener('click', function () {
+        var id = lbl.closest('tr').dataset.ssId;
+        exp[id] = !exp[id];
+        buildTable();
+      });
+    });
+  }
+
+  buildTable();
+
+  /* ── nav tree toggle ────────────────────────────────────────────────── */
+  document.querySelectorAll('[data-tree-toggle]').forEach(function (item) {
+    item.addEventListener('click', function (e) {
+      var childId = item.getAttribute('data-tree-toggle') + '-children';
+      var children = document.getElementById(childId);
+      var icon = item.querySelector('.tree-icon');
+      if (children) {
+        var open = children.style.display !== 'none';
+        children.style.display = open ? 'none' : '';
+        if (icon) icon.textContent = open ? 'chevron_right' : 'expand_more';
+      }
+      /* also mark as selected */
+      document.querySelectorAll('.tree-item').forEach(function (i) { i.classList.remove('selected'); });
+      item.classList.add('selected');
+    });
+  });
+
+  /* ── nav tree leaf selection ────────────────────────────────────────── */
+  document.querySelectorAll('.tree-item:not([data-tree-toggle])').forEach(function (item) {
+    item.addEventListener('click', function () {
+      document.querySelectorAll('.tree-item').forEach(function (i) { i.classList.remove('selected'); });
+      item.classList.add('selected');
+    });
+  });
+
 }());
 </script>
 </body>
