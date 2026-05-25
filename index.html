@@ -7401,7 +7401,25 @@
             }
             return '';
           }
-          return { hotel: hotel, segment: findLeaf(tree) };
+          /* Returns ancestor labels between the hotel root and the leaf */
+          function findAncestors(nodes, acc) {
+            for (var j = 0; j < nodes.length; j++) {
+              var n = nodes[j];
+              if (n.leaf && n.id === selectedId) return acc;
+              if (n.children) {
+                var r = findAncestors(n.children, acc.concat(n.label));
+                if (r) return r;
+              }
+            }
+            return null;
+          }
+          var hotelNode = null;
+          for (var i = 0; i < tree.length; i++) {
+            if (containsSelected(tree[i])) { hotelNode = tree[i]; break; }
+          }
+          var ancestors = hotelNode ? findAncestors(hotelNode.children || [], []) : null;
+          var category = ancestors ? ancestors.join(' / ') : '';
+          return { hotel: hotel, segment: findLeaf(tree), category: category };
         },
         getSelectedId: function() { return selectedId; },
         onSelectionChange: null
@@ -7681,7 +7699,7 @@
         var mc = document.createElement('th');
         mc.className = 'rt-corner';
         mc.rowSpan = 2;
-        var info = window.rposNav ? window.rposNav.getSelectedInfo() : { hotel: '', segment: '' };
+        var info = window.rposNav ? window.rposNav.getSelectedInfo() : { hotel: '', segment: '', category: '' };
         KM['bl'].lb = info.segment || 'BAR/Leisure';
         var ccontent = document.createElement('div');
         ccontent.className = 'rt-corner-content';
@@ -7690,7 +7708,7 @@
         hotelEl.textContent = info.hotel;
         var segEl = document.createElement('div');
         segEl.className = 'rt-corner-segment';
-        segEl.textContent = info.segment;
+        segEl.textContent = info.category;
         ccontent.appendChild(hotelEl);
         ccontent.appendChild(segEl);
         mc.appendChild(ccontent);
