@@ -7682,6 +7682,7 @@
         mc.className = 'rt-corner';
         mc.rowSpan = 2;
         var info = window.rposNav ? window.rposNav.getSelectedInfo() : { hotel: '', segment: '' };
+        KM['bl'].lb = info.segment || 'BAR/Leisure';
         var ccontent = document.createElement('div');
         ccontent.className = 'rt-corner-content';
         var hotelEl = document.createElement('div');
@@ -7721,12 +7722,13 @@
         /* TBODY */
         var tbody = document.createElement('tbody');
         var stickyTop = 64; /* two 32px header rows */
+        var EMPHASIS_LABELS = { 'Current': true, 'Recommended': true, 'Override': true };
+        EMPHASIS_LABELS[KM['bl'].lb] = true;
 
         ROWS.forEach(function(row) {
           if (!visible(row)) return;
           var tr = document.createElement('tr');
 
-          var EMPHASIS_LABELS = { 'BAR/Leisure': true, 'Current': true, 'Recommended': true, 'Override': true };
           var emphasisClass = EMPHASIS_LABELS[row.lb] ? ' rt-row-emphasis' : ' rt-row-secondary';
 
           if (row.t === 'section') {
