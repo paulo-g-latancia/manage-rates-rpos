@@ -241,7 +241,10 @@
       flex-wrap: wrap;
     }
 
-    .page-title { font-size: 18px; font-weight: 700; color: var(--text-sec); }
+    .page-title-group { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .page-title-row { display: flex; align-items: center; gap: 8px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text-sec); line-height: normal; }
+    .page-subtitle { font-size: 12px; font-weight: 400; color: var(--text-sec); line-height: normal; }
 
     .page-actions {
       display: flex;
@@ -286,11 +289,23 @@
       flex-shrink: 0; margin: 0 4px;
     }
 
+    .btn-icon-bordered {
+      background: white;
+      border: 1px solid #63696F;
+      border-radius: 4px;
+      height: 36px; width: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-sec);
+      flex-shrink: 0;
+    }
+    .btn-icon-bordered:hover { background: var(--grey-200); }
+    .btn-icon-bordered .mi { font-size: 22px; }
+
     .date-picker {
       background: white;
       border: 1px solid var(--grey-300);
       border-radius: 4px;
-      height: 36px; width: 200px;
+      height: 36px; width: 240px;
       display: flex; align-items: center;
       padding: 0 4px 0 8px; gap: 8px;
       cursor: pointer;
@@ -2228,19 +2243,25 @@
 
     <!-- Page Title + Actions -->
     <div class="page-title-bar">
-      <h1 class="page-title">Manage Rates</h1>
+      <div class="page-title-group">
+        <div class="page-title-row">
+          <h1 class="page-title">Manage Rates</h1>
+          <span class="material-icons-round" style="font-size:18px;color:var(--text-sec);">info</span>
+        </div>
+        <span class="page-subtitle">Last updated 12/01/2026 at 12:12 pm</span>
+      </div>
       <div class="page-actions">
         <button class="btn-primary">
           <span class="material-icons-round mi">publish</span>
           Publish
         </button>
         <button class="btn-ghost">
-          <span class="material-icons-round mi">sync</span>
-          <span class="label">Optimize</span>
-        </button>
-        <button class="btn-ghost">
           <span class="material-icons-round mi">table_rows</span>
           <span class="label">Table Settings</span>
+        </button>
+        <button class="btn-ghost">
+          <span class="material-icons-round mi">sync</span>
+          <span class="label">Optimize</span>
         </button>
         <div class="v-divider"></div>
         <button class="btn-icon-sm">
@@ -2248,8 +2269,11 @@
         </button>
         <div class="date-picker">
           <span class="material-icons-round mi">calendar_today</span>
-          <span class="dp-label">Next 7 Days</span>
+          <span class="dp-label">Next 30 Days</span>
         </div>
+        <button class="btn-icon-bordered">
+          <span class="material-icons-round mi">more_vert</span>
+        </button>
       </div>
     </div>
 
