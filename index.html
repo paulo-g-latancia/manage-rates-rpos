@@ -7698,6 +7698,7 @@
 
       var selectedCol = 0;
       var focusOverrideAfterBuild = false;
+      var overrideValues = {};
 
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
@@ -7822,13 +7823,17 @@
                   var dot = raw.indexOf('.');
                   if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
                   this.value = '$ ' + raw;
+                  overrideValues[di] = this.value;
                 });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
-                  if (!raw || raw === '.') { this.value = ''; return; }
+                  if (!raw || raw === '.') { overrideValues[di] = ''; this.value = ''; return; }
                   var num = parseFloat(raw);
-                  this.value = !isNaN(num) ? '$ ' + num.toFixed(2) : '';
+                  var fmt = !isNaN(num) ? '$ ' + num.toFixed(2) : '';
+                  overrideValues[di] = fmt;
+                  this.value = fmt;
                 });
+                inp.value = overrideValues[di] || '';
                 if (di === selectedCol) overrideInputToFocus = inp;
                 td.appendChild(inp);
               } else {
