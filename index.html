@@ -604,6 +604,26 @@
     }
 
     .rt-section .rt-lbl { font-weight: 700; }
+    .rt-section, .rt-subsection { cursor: pointer; }
+
+    /* Override row inputs */
+    .rt-override-input {
+      width: 100%;
+      height: 32px;
+      border: none;
+      background: transparent;
+      text-align: right;
+      padding: 0 12px 0 4px;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+      color: #1c1c1c;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .rt-override-input:focus {
+      background: rgba(36, 139, 134, 0.08);
+      border-bottom: 2px solid #248b86;
+    }
 
     /* Data cells */
     .rt-cell {
@@ -7533,6 +7553,7 @@
 
           if (row.t === 'section') {
             tr.className = 'rt-section';
+            tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
             lc.colSpan = dates.length + 1;
@@ -7541,15 +7562,12 @@
 
           } else if (row.t === 'subsection') {
             tr.className = 'rt-subsection';
+            tr.addEventListener('click', function() { row.exp = !row.exp; build(); });
             var lc = document.createElement('td');
             lc.className = 'rt-lc';
+            lc.colSpan = dates.length + 1;
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
-            dates.forEach(function(d) {
-              var td = document.createElement('td');
-              td.className = 'rt-cell' + (isWknd(d) ? ' rt-wknd' : '');
-              tr.appendChild(td);
-            });
 
           } else {
             tr.className = 'rt-data';
@@ -7557,10 +7575,35 @@
             lc.className = 'rt-lc';
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
+            var isOverride = row.lb === 'Override';
             dates.forEach(function(d) {
               var td = document.createElement('td');
-              td.className = 'rt-cell' + (isWknd(d) ? ' rt-wknd' : '');
-              td.textContent = 'value';
+              td.className = 'rt-cell';
+              if (isOverride) {
+                td.style.padding = '0';
+                var inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'rt-override-input';
+                inp.addEventListener('input', function() {
+                  var raw = this.value.replace(/[^0-9.]/g, '');
+                  var parts = raw.split('.');
+                  if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+                  this.value = raw;
+                });
+                inp.addEventListener('blur', function() {
+                  var raw = this.value.replace(/[^0-9.]/g, '');
+                  if (!raw || raw === '.') { this.value = ''; return; }
+                  var num = parseFloat(raw);
+                  if (!isNaN(num)) this.value = '$ ' + num.toFixed(2);
+                  else this.value = '';
+                });
+                inp.addEventListener('focus', function() {
+                  this.value = this.value.replace(/[^0-9.]/g, '');
+                });
+                td.appendChild(inp);
+              } else {
+                td.textContent = 'value';
+              }
               tr.appendChild(td);
             });
           }
