@@ -562,7 +562,7 @@
       border-right: 1px solid #e0e0e0;
     }
 
-    /* Corner cell (sticky both axes) */
+    /* Corner cell (sticky both axes, spans both header rows) */
     .rt-corner {
       position: sticky;
       left: 0;
@@ -572,9 +572,32 @@
       width: 240px;
       min-width: 240px;
       border-right: 1px solid #e0e0e0;
+      vertical-align: middle;
     }
 
-    .rt-head-day .rt-corner { top: 32px; z-index: 5; }
+    .rt-corner-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0 12px;
+    }
+
+    .rt-corner-hotel {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1c1c1c;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rt-corner-segment {
+      font-size: 11px;
+      color: #4F5B60;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* Weekend tint */
     .rt-wknd { background: #f5f5f5 !important; }
@@ -7329,6 +7352,7 @@
             div.addEventListener('click', function() {
               selectedId = node.id;
               redraw();
+              if (window.rposNav && window.rposNav.onSelectionChange) window.rposNav.onSelectionChange();
             });
           } else {
             div.addEventListener('click', function() {
@@ -7353,6 +7377,25 @@
       }
 
       redraw();
+
+      /* Expose selection info for the table IIFE */
+      window.rposNav = {
+        getSelectedInfo: function() {
+          var hotel = '';
+          for (var i = 0; i < tree.length; i++) {
+            if (containsSelected(tree[i])) { hotel = tree[i].label; break; }
+          }
+          function findLeaf(nodes) {
+            for (var j = 0; j < nodes.length; j++) {
+              if (nodes[j].leaf && nodes[j].id === selectedId) return nodes[j].label;
+              if (nodes[j].children) { var r = findLeaf(nodes[j].children); if (r) return r; }
+            }
+            return '';
+          }
+          return { hotel: hotel, segment: findLeaf(tree) };
+        },
+        onSelectionChange: null
+      };
 
       /* ── Resize handles ─────────────────────────────── */
       function initResize(handleEl, panelEl, side) {
@@ -7393,6 +7436,16 @@
   <script>
     /* ── Rates Table ─────────────────────────────────────────────────── */
     (function() {
+      var cornerCell = null;
+
+      function updateCornerInfo() {
+        if (!cornerCell || !window.rposNav) return;
+        var info = window.rposNav.getSelectedInfo();
+        var hotelEl = cornerCell.querySelector('.rt-corner-hotel');
+        var segEl   = cornerCell.querySelector('.rt-corner-segment');
+        if (hotelEl) hotelEl.textContent = info.hotel;
+        if (segEl)   segEl.textContent   = info.segment;
+      }
       var DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
       var MONTH_FMT = { month:'long', year:'numeric' };
 
@@ -7525,11 +7578,25 @@
         /* THEAD */
         var thead = document.createElement('thead');
 
-        /* Month row */
+        /* Month row — corner spans both header rows */
         var mr = document.createElement('tr');
         mr.className = 'rt-head-month';
         var mc = document.createElement('th');
         mc.className = 'rt-corner';
+        mc.rowSpan = 2;
+        var info = window.rposNav ? window.rposNav.getSelectedInfo() : { hotel: '', segment: '' };
+        var ccontent = document.createElement('div');
+        ccontent.className = 'rt-corner-content';
+        var hotelEl = document.createElement('div');
+        hotelEl.className = 'rt-corner-hotel';
+        hotelEl.textContent = info.hotel;
+        var segEl = document.createElement('div');
+        segEl.className = 'rt-corner-segment';
+        segEl.textContent = info.segment;
+        ccontent.appendChild(hotelEl);
+        ccontent.appendChild(segEl);
+        mc.appendChild(ccontent);
+        cornerCell = mc;
         mr.appendChild(mc);
         months.forEach(function(m) {
           var mth = document.createElement('th');
@@ -7542,12 +7609,9 @@
         });
         thead.appendChild(mr);
 
-        /* Day row */
+        /* Day row — no corner cell (covered by rowspan above) */
         var dr = document.createElement('tr');
         dr.className = 'rt-head-day';
-        var dc = document.createElement('th');
-        dc.className = 'rt-corner';
-        dr.appendChild(dc);
         dates.forEach(function(d) {
           var dth = document.createElement('th');
           dth.className = isWknd(d) ? 'rt-wknd' : '';
@@ -7629,6 +7693,7 @@
       }
 
       build();
+      if (window.rposNav) window.rposNav.onSelectionChange = updateCornerInfo;
     })();
   </script>
 </body>
