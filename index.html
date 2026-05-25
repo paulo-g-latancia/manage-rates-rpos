@@ -449,9 +449,7 @@
       flex: 1;
       min-width: 0;
       overflow: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: relative;
     }
 
     .mc-table-placeholder {
@@ -489,6 +487,120 @@
       font-style: italic;
       color: #1c1c1c;
       text-align: center;
+    }
+
+    /* ─── RATES TABLE ──────────────────────────────────── */
+    .rt-table {
+      border-collapse: collapse;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+      color: #1c1c1c;
+      white-space: nowrap;
+    }
+
+    .rt-table th, .rt-table td {
+      height: 32px;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Sticky header rows */
+    .rt-head-month th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: white;
+      font-weight: 700;
+      font-size: 14px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .rt-head-day th {
+      position: sticky;
+      top: 32px;
+      z-index: 3;
+      background: white;
+      font-weight: 400;
+      text-align: center;
+      min-width: 72px;
+      width: 72px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* Sticky label column */
+    .rt-lc {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      width: 240px;
+      min-width: 240px;
+      background: white;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    /* Corner cell (sticky both axes) */
+    .rt-corner {
+      position: sticky;
+      left: 0;
+      top: 0;
+      z-index: 5;
+      background: white;
+      width: 240px;
+      min-width: 240px;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .rt-head-day .rt-corner { top: 32px; z-index: 5; }
+
+    /* Weekend tint */
+    .rt-wknd { background: #f5f5f5 !important; }
+
+    /* Section header row */
+    .rt-section td { background: #dde1e2; }
+    .rt-section .rt-lc { background: #dde1e2; z-index: 2; }
+
+    /* Subsection header row */
+    .rt-subsection td { background: #eaeeef; }
+    .rt-subsection .rt-lc { background: #eaeeef; z-index: 2; }
+
+    /* Label cell inner layout */
+    .rt-label-inner {
+      display: flex;
+      align-items: center;
+      height: 32px;
+      overflow: hidden;
+      padding-right: 8px;
+    }
+
+    .rt-exp-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .rt-exp-btn .mi { font-size: 18px; }
+
+    .rt-lbl {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .rt-section .rt-lbl { font-weight: 700; }
+
+    /* Data cells */
+    .rt-cell {
+      width: 72px;
+      min-width: 72px;
+      text-align: right;
+      padding-right: 12px;
+      padding-left: 4px;
     }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
@@ -2461,7 +2573,7 @@
 
         <!-- Table area -->
         <div class="mc-table-area" id="mc-table-area">
-          <span class="mc-table-placeholder">TABLE PLACEHOLDER</span>
+          <div id="rt-wrap"></div>
         </div>
 
         <!-- Resize handle: right -->
@@ -7217,6 +7329,223 @@
 
       if (lNav && lHandle) initResize(lHandle, lNav, 'left');
       if (cPanel && rHandle) initResize(rHandle, cPanel, 'right');
+    })();
+  </script>
+  <script>
+    /* ── Rates Table ─────────────────────────────────────────────────── */
+    (function() {
+      var DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var MONTH_FMT = { month:'long', year:'numeric' };
+
+      /* Generate next 30 dates from today */
+      function getDates() {
+        var base = new Date();
+        base.setHours(0,0,0,0);
+        var out = [];
+        for (var i = 0; i < 30; i++) {
+          var d = new Date(base);
+          d.setDate(base.getDate() + i);
+          out.push(d);
+        }
+        return out;
+      }
+
+      function isWknd(d) { return d.getDay() === 0 || d.getDay() === 6; }
+
+      function groupMonths(dates) {
+        var groups = [];
+        dates.forEach(function(d) {
+          var key = d.getFullYear() + '-' + d.getMonth();
+          var last = groups[groups.length - 1];
+          if (last && last.key === key) { last.count++; }
+          else { groups.push({ key: key, label: d.toLocaleDateString('en-US', MONTH_FMT), count: 1 }); }
+        });
+        return groups;
+      }
+
+      /* Row definitions */
+      var ROWS = [
+        { t:'section',    lb:'BAR/Leisure',            k:'bl',   exp:true },
+        { t:'data',       lb:'Current',                pk:'bl',  ind:1 },
+        { t:'data',       lb:'Recommended',            pk:'bl',  ind:1 },
+        { t:'data',       lb:'Override',               pk:'bl',  ind:1 },
+        { t:'subsection', lb:'Room Types',             k:'rt',   pk:'bl', ind:1, exp:true },
+        { t:'data',       lb:'Standard Queen',         pk:'rt',  ind:2 },
+        { t:'data',       lb:'Standard King',          pk:'rt',  ind:2 },
+        { t:'data',       lb:'Double',                 pk:'rt',  ind:2 },
+        { t:'data',       lb:'Junior Suite',           pk:'rt',  ind:2 },
+        { t:'subsection', lb:'Rooms Commit',           k:'rc',   pk:'bl', ind:1, exp:true },
+        { t:'data',       lb:'BAR',                    pk:'rc',  ind:2 },
+        { t:'data',       lb:'STLY',                   pk:'rc',  ind:2 },
+        { t:'subsection', lb:'Revenue & Profit',       k:'rp',   pk:'bl', ind:1, exp:true },
+        { t:'data',       lb:'Room Revenue',           pk:'rp',  ind:2 },
+        { t:'data',       lb:'Cost of Acquisition',    pk:'rp',  ind:2 },
+        { t:'data',       lb:'Net Room Revenue',       pk:'rp',  ind:2 },
+        { t:'data',       lb:'Net ADR',                pk:'rp',  ind:2 },
+        { t:'data',       lb:'Net RevPAR',             pk:'rp',  ind:2 },
+        { t:'section',    lb:'Hotel Data',             k:'hd',   exp:true },
+        { t:'subsection', lb:'Duetto Forecast',        k:'df',   pk:'hd', ind:1, exp:true },
+        { t:'data',       lb:'Room Nights',            pk:'df',  ind:2 },
+        { t:'data',       lb:'%',                      pk:'df',  ind:2 },
+        { t:'subsection', lb:'Demand Occupancy',       k:'do',   pk:'hd', ind:1, exp:true },
+        { t:'data',       lb:'Room Nights',            pk:'do',  ind:2 },
+        { t:'data',       lb:'%',                      pk:'do',  ind:2 },
+        { t:'data',       lb:'Out of Order Rooms',     pk:'hd',  ind:1 },
+        { t:'data',       lb:'Remaining Rooms',        pk:'hd',  ind:1 },
+        { t:'data',       lb:'Booking.com Rate',       pk:'hd',  ind:1 },
+        { t:'subsection', lb:'Competitors',            k:'co',   pk:'hd', ind:1, exp:true },
+        { t:'data',       lb:'Low',                    pk:'co',  ind:2 },
+        { t:'data',       lb:'Average',                pk:'co',  ind:2 },
+        { t:'data',       lb:'High',                   pk:'co',  ind:2 },
+        { t:'subsection', lb:'Rate Shop',              k:'rs',   pk:'hd', ind:1, exp:true },
+        { t:'data',       lb:'Hotel Mirasol',          pk:'rs',  ind:2 },
+        { t:'data',       lb:'Maritim proArte Barcelona', pk:'rs', ind:2 },
+        { t:'data',       lb:'Kempinski Hotel Barcelona', pk:'rs', ind:2 }
+      ];
+
+      /* Key map for ancestor lookup */
+      var KM = {};
+      ROWS.forEach(function(r) { if (r.k) KM[r.k] = r; });
+
+      function visible(row) {
+        if (!row.pk) return true;
+        var p = KM[row.pk];
+        if (!p) return true;
+        if (!p.exp) return false;
+        return visible(p);
+      }
+
+      function th(tag, cls, txt, extra) {
+        var el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (txt !== undefined) el.textContent = txt;
+        if (extra) Object.keys(extra).forEach(function(k) { el[k] = extra[k]; });
+        return el;
+      }
+
+      function makeExpBtn(row, redraw) {
+        var btn = document.createElement('div');
+        btn.className = 'rt-exp-btn';
+        var ic = document.createElement('span');
+        ic.className = 'material-icons-round mi';
+        ic.textContent = row.exp ? 'expand_more' : 'chevron_right';
+        btn.appendChild(ic);
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          row.exp = !row.exp;
+          redraw();
+        });
+        return btn;
+      }
+
+      function makeLabelInner(row, redraw) {
+        var inner = document.createElement('div');
+        inner.className = 'rt-label-inner';
+        var padLeft;
+        if (row.t === 'section') { padLeft = 4; inner.appendChild(makeExpBtn(row, redraw)); }
+        else if (row.t === 'subsection') { padLeft = 16; inner.appendChild(makeExpBtn(row, redraw)); }
+        else { padLeft = row.ind === 2 ? 56 : 40; }
+        inner.style.paddingLeft = padLeft + 'px';
+        var lbl = document.createElement('span');
+        lbl.className = 'rt-lbl';
+        lbl.textContent = row.lb;
+        inner.appendChild(lbl);
+        return inner;
+      }
+
+      function build() {
+        var dates = getDates();
+        var months = groupMonths(dates);
+        var wrap = document.getElementById('rt-wrap');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+
+        var tbl = document.createElement('table');
+        tbl.className = 'rt-table';
+
+        /* THEAD */
+        var thead = document.createElement('thead');
+
+        /* Month row */
+        var mr = document.createElement('tr');
+        mr.className = 'rt-head-month';
+        var mc = document.createElement('th');
+        mc.className = 'rt-corner';
+        mr.appendChild(mc);
+        months.forEach(function(m) {
+          var mth = document.createElement('th');
+          mth.colSpan = m.count;
+          mth.textContent = m.label;
+          mth.style.textAlign = 'left';
+          mth.style.paddingLeft = '12px';
+          mr.appendChild(mth);
+        });
+        thead.appendChild(mr);
+
+        /* Day row */
+        var dr = document.createElement('tr');
+        dr.className = 'rt-head-day';
+        var dc = document.createElement('th');
+        dc.className = 'rt-corner';
+        dr.appendChild(dc);
+        dates.forEach(function(d) {
+          var dth = document.createElement('th');
+          dth.className = isWknd(d) ? 'rt-wknd' : '';
+          dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
+          dr.appendChild(dth);
+        });
+        thead.appendChild(dr);
+        tbl.appendChild(thead);
+
+        /* TBODY */
+        var tbody = document.createElement('tbody');
+
+        ROWS.forEach(function(row) {
+          if (!visible(row)) return;
+          var tr = document.createElement('tr');
+
+          if (row.t === 'section') {
+            tr.className = 'rt-section';
+            var lc = document.createElement('td');
+            lc.className = 'rt-lc';
+            lc.colSpan = dates.length + 1;
+            lc.appendChild(makeLabelInner(row, build));
+            tr.appendChild(lc);
+
+          } else if (row.t === 'subsection') {
+            tr.className = 'rt-subsection';
+            var lc = document.createElement('td');
+            lc.className = 'rt-lc';
+            lc.appendChild(makeLabelInner(row, build));
+            tr.appendChild(lc);
+            dates.forEach(function(d) {
+              var td = document.createElement('td');
+              td.className = 'rt-cell' + (isWknd(d) ? ' rt-wknd' : '');
+              tr.appendChild(td);
+            });
+
+          } else {
+            tr.className = 'rt-data';
+            var lc = document.createElement('td');
+            lc.className = 'rt-lc';
+            lc.appendChild(makeLabelInner(row, build));
+            tr.appendChild(lc);
+            dates.forEach(function(d) {
+              var td = document.createElement('td');
+              td.className = 'rt-cell' + (isWknd(d) ? ' rt-wknd' : '');
+              td.textContent = 'value';
+              tr.appendChild(td);
+            });
+          }
+
+          tbody.appendChild(tr);
+        });
+
+        tbl.appendChild(tbody);
+        wrap.appendChild(tbl);
+      }
+
+      build();
     })();
   </script>
 </body>
