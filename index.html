@@ -7403,6 +7403,7 @@
           }
           return { hotel: hotel, segment: findLeaf(tree) };
         },
+        getSelectedId: function() { return selectedId; },
         onSelectionChange: null
       };
 
@@ -7574,7 +7575,94 @@
         return inner;
       }
 
+      /* ─── Fake data layer ──────────────────────────────────── */
+      var HOTELS_DB = {
+        hbcn: { cur: '€', base: 189, rooms: 180 },
+        hcam: { cur: '£', base: 249, rooms: 120 },
+        hdub: { cur: '€', base: 219, rooms: 150 }
+      };
+      var SEG_RATE_MULT = {
+        't-r-bar':1.00,'t-r-lrd':0.88,'t-r-ota':0.92,
+        't-d-bar':0.82,'t-d-mem':0.85,
+        't-n-corp':0.78,'t-n-govt':0.72,
+        'g-short':0.65,'g-long':0.60,'g-meet':0.70,
+        'c-corp':0.75,'c-pref':0.80,
+        'o-day':0.55,'o-pkg':1.15
+      };
+      var SEG_ROOMS_PCT = {
+        't-r-bar':0.22,'t-r-lrd':0.08,'t-r-ota':0.15,
+        't-d-bar':0.10,'t-d-mem':0.06,
+        't-n-corp':0.12,'t-n-govt':0.04,
+        'g-short':0.08,'g-long':0.05,'g-meet':0.04,
+        'c-corp':0.09,'c-pref':0.05,
+        'o-day':0.02,'o-pkg':0.06
+      };
+      var ROOM_TYPE_MULT = {
+        'Standard Queen':1.00,'Standard King':1.05,'Double':0.98,'Junior Suite':1.45
+      };
+      function dbHash(s) {
+        var h = 5381;
+        for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) & 0x7fffffff; }
+        return h;
+      }
+      function rnd(seed) { var x = Math.sin(seed + 1) * 10000; return x - Math.floor(x); }
+      function fmtMoney(cur, n) { return cur + ' ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+      function fmtInt(n) { return Math.round(n).toString(); }
+      function fmtPct(n) { return Math.round(n) + '%'; }
+      function dbVal(row, hotelId, segId, di, d) {
+        var h = HOTELS_DB[hotelId]; if (!h) return '';
+        var st = segId.indexOf('-') < 0 ? segId : segId.slice(segId.indexOf('-') + 1);
+        var lb = row.lb; var pk = row.pk;
+        var sMult = SEG_RATE_MULT[st] || 1.00;
+        var sPct  = SEG_ROOMS_PCT[st]  || 0.10;
+        var dow = d.getDay();
+        var isWe = dow === 5 || dow === 6 || dow === 0;
+        var wknd = isWe ? 1.18 : 1.0;
+        var rSeed = dbHash(hotelId + segId + lb + di);
+        var rVar  = 0.93 + rnd(rSeed) * 0.14;
+        var rate  = h.base * sMult * wknd * rVar;
+        var hOccSeed = dbHash(hotelId + 'occ' + di);
+        var hOcc = Math.max(0.28, Math.min(0.97, 0.72 - di * 0.009 + (isWe ? 0.13 : 0) + (-0.04 + rnd(hOccSeed) * 0.08)));
+        var hRooms = Math.round(hOcc * h.rooms);
+        var sOccSeed = dbHash(hotelId + segId + 'occ' + di);
+        var sOcc = Math.max(0.20, Math.min(0.97, hOcc * 0.85 + (-0.04 + rnd(sOccSeed) * 0.08)));
+        var sRooms = Math.max(1, Math.round(h.rooms * sPct * sOcc));
+        var coaSeed = dbHash(hotelId + segId + 'coa' + di);
+        var coa = 0.065 + rnd(coaSeed) * 0.025;
+        switch (lb) {
+          case 'Current':     return fmtMoney(h.cur, rate);
+          case 'Recommended': return fmtMoney(h.cur, rate * (0.97 + rnd(dbHash(hotelId + segId + 'rec' + di)) * 0.06));
+          case 'Standard Queen': case 'Standard King': case 'Double': case 'Junior Suite':
+            return fmtMoney(h.cur, rate * (ROOM_TYPE_MULT[lb] || 1));
+          case 'BAR':  return fmtInt(sRooms);
+          case 'STLY': return fmtInt(sRooms * (0.90 + rnd(dbHash(hotelId + segId + 'stly' + di)) * 0.20));
+          case 'Room Revenue':        return fmtMoney(h.cur, rate * sRooms);
+          case 'Cost of Acquisition': return fmtMoney(h.cur, rate * sRooms * coa);
+          case 'Net Room Revenue':    return fmtMoney(h.cur, rate * sRooms * (1 - coa));
+          case 'Net ADR':             return fmtMoney(h.cur, rate * (1 - coa));
+          case 'Net RevPAR':          return fmtMoney(h.cur, rate * sRooms * (1 - coa) / h.rooms);
+          case 'Room Nights':
+            if (pk === 'df') return fmtInt(hRooms);
+            return fmtInt(hRooms * (0.96 + rnd(dbHash(hotelId + 'dem' + di)) * 0.08));
+          case '%':
+            if (pk === 'df') return fmtPct(hOcc * 100);
+            return fmtPct(hOcc * (0.96 + rnd(dbHash(hotelId + 'dem2' + di)) * 0.08) * 100);
+          case 'Out of Order Rooms': return fmtInt(Math.floor(rnd(dbHash(hotelId + 'oor' + di)) * 6));
+          case 'Remaining Rooms':    return fmtInt(h.rooms - hRooms - Math.floor(rnd(dbHash(hotelId + 'oor' + di)) * 6));
+          case 'Booking.com Rate':   return fmtMoney(h.cur, h.base * wknd * (0.97 + rnd(dbHash(hotelId + 'bcom' + di)) * 0.06));
+          case 'Low':     return fmtMoney(h.cur, h.base * wknd * (0.82 + rnd(dbHash(hotelId + 'clo' + di)) * 0.06));
+          case 'Average': return fmtMoney(h.cur, h.base * wknd * (0.96 + rnd(dbHash(hotelId + 'cav' + di)) * 0.10));
+          case 'High':    return fmtMoney(h.cur, h.base * wknd * (1.14 + rnd(dbHash(hotelId + 'chi' + di)) * 0.12));
+          case 'Hotel Mirasol':              return fmtMoney(h.cur, h.base * wknd * (0.90 + rnd(dbHash(hotelId + 'rs1' + di)) * 0.14));
+          case 'Maritim proArte Barcelona':  return fmtMoney(h.cur, h.base * wknd * (0.88 + rnd(dbHash(hotelId + 'rs2' + di)) * 0.18));
+          case 'Kempinski Hotel Barcelona':  return fmtMoney(h.cur, h.base * wknd * (1.06 + rnd(dbHash(hotelId + 'rs3' + di)) * 0.20));
+          default: return '';
+        }
+      }
+
       function build() {
+        var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
+        var hotelId = selId.split('-')[0];
         var dates = getDates();
         var months = groupMonths(dates);
         var wrap = document.getElementById('rt-wrap');
@@ -7666,7 +7754,7 @@
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
             var isOverride = row.lb === 'Override';
-            dates.forEach(function(d) {
+            dates.forEach(function(d, di) {
               var td = document.createElement('td');
               td.className = 'rt-cell';
               if (isOverride) {
@@ -7692,7 +7780,7 @@
                 });
                 td.appendChild(inp);
               } else {
-                td.textContent = 'value';
+                td.textContent = dbVal(row, hotelId, selId, di, d);
               }
               tr.appendChild(td);
             });
@@ -7726,7 +7814,7 @@
       }
 
       build();
-      if (window.rposNav) window.rposNav.onSelectionChange = updateCornerInfo;
+      if (window.rposNav) window.rposNav.onSelectionChange = build;
     })();
   </script>
 </body>
