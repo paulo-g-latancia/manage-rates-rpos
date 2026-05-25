@@ -7813,21 +7813,23 @@
                 var inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'rt-override-input';
+                inp.addEventListener('focus', function() {
+                  this.value = this.value.replace(/[^0-9.]/g, '');
+                  this.select();
+                });
                 inp.addEventListener('input', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
-                  var parts = raw.split('.');
-                  if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
-                  this.value = raw;
+                  var dot = raw.indexOf('.');
+                  if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '').slice(0, 2);
+                  if (!raw || raw === '.') { this.value = raw; return; }
+                  var num = parseFloat(raw);
+                  if (!isNaN(num)) this.value = '$ ' + num.toFixed(2);
                 });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   if (!raw || raw === '.') { this.value = ''; return; }
                   var num = parseFloat(raw);
-                  if (!isNaN(num)) this.value = '$ ' + num.toFixed(2);
-                  else this.value = '';
-                });
-                inp.addEventListener('focus', function() {
-                  this.value = this.value.replace(/[^0-9.]/g, '');
+                  this.value = !isNaN(num) ? '$ ' + num.toFixed(2) : '';
                 });
                 if (di === selectedCol) overrideInputToFocus = inp;
                 td.appendChild(inp);
