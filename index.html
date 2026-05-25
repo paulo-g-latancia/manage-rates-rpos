@@ -7814,16 +7814,14 @@
                 inp.type = 'text';
                 inp.className = 'rt-override-input';
                 inp.addEventListener('focus', function() {
-                  this.value = this.value.replace(/[^0-9.]/g, '');
-                  this.select();
+                  var raw = this.value.replace(/[^0-9.]/g, '');
+                  this.value = '$ ' + raw;
                 });
                 inp.addEventListener('input', function() {
-                  var raw = this.value.replace(/[^0-9.]/g, '');
+                  var raw = this.value.replace(/^\$\s*/, '').replace(/[^0-9.]/g, '');
                   var dot = raw.indexOf('.');
-                  if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '').slice(0, 2);
-                  if (!raw || raw === '.') { this.value = raw; return; }
-                  var num = parseFloat(raw);
-                  if (!isNaN(num)) this.value = '$ ' + num.toFixed(2);
+                  if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
+                  this.value = '$ ' + raw;
                 });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
