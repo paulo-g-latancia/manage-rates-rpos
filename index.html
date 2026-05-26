@@ -721,6 +721,48 @@
 
     .rt-cur { color: #9fa8ad; }
     .rt-table .rt-cell { position: relative; }
+
+    /* Rate explainer icon */
+    .rt-rec-explain {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 4px;
+      position: relative;
+      color: #248b86;
+      cursor: default;
+      opacity: 0;
+      pointer-events: none;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .rt-cell:hover .rt-rec-explain {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .rt-rec-explain .mi { font-size: 15px; line-height: 1; }
+    .rt-rec-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1c;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 4px;
+      padding: 8px 10px;
+      width: 200px;
+      z-index: 300;
+      white-space: normal;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.05s 0.12s;
+    }
+    .rt-rec-tooltip strong { display: block; margin-bottom: 3px; font-size: 12px; }
+    .rt-rec-explain:hover .rt-rec-tooltip {
+      opacity: 1;
+      transition: opacity 0.05s 0s;
+    }
     .rt-radio {
       position: absolute;
       left: 6px;
@@ -7916,6 +7958,19 @@
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
                   td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
                 } else { td.textContent = val; }
+                if (isRecommended) {
+                  var explainBtn = document.createElement('span');
+                  explainBtn.className = 'rt-rec-explain';
+                  var explainIcon = document.createElement('span');
+                  explainIcon.className = 'mi material-icons-round';
+                  explainIcon.textContent = 'zoom_in';
+                  var tooltip = document.createElement('div');
+                  tooltip.className = 'rt-rec-tooltip';
+                  tooltip.innerHTML = '<strong>Rate Explainer</strong>Placeholder content: context and reasoning behind this recommended rate.';
+                  explainBtn.appendChild(explainIcon);
+                  explainBtn.appendChild(tooltip);
+                  td.appendChild(explainBtn);
+                }
                 td.appendChild(radioEl);
 
               } else {
