@@ -8029,7 +8029,7 @@
                   var fmt = !isNaN(num) ? num.toFixed(2) : '';
                   overrideValues[di] = fmt; this.value = fmt; updatePublishBtn();
                   if (radioValues[di] === 'override' && !isLoading && overrideApplied[di] !== fmt) {
-                    startLoading(di);
+                    selectedCol = di; startLoading(di);
                   }
                 });
                 inp.value = overrideValues[di] || '';
@@ -8071,7 +8071,7 @@
                   if (isLoading) return;
                   var wasRec = (radioValues[di] === 'recommended');
                   radioEl.checked = true; radioValues[di] = radioKey;
-                  if (isRecommended && !wasRec) startLoading(di); else updatePublishBtn();
+                  if (isRecommended && !wasRec) { selectedCol = di; startLoading(di); } else updatePublishBtn();
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
