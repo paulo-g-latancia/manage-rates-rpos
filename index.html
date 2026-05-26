@@ -720,18 +720,16 @@
     td.rt-sel-col.rt-cell-hov            { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.14) !important; }
 
     .rt-cur { color: #9fa8ad; }
+    .rt-table .rt-cell { position: relative; }
     .rt-radio {
+      position: absolute;
+      left: 6px;
+      top: 50%;
+      transform: translateY(-50%);
       accent-color: #248b86;
-      width: 14px; height: 14px;
-      flex-shrink: 0; cursor: pointer; margin: 0;
+      width: 13px; height: 13px;
+      cursor: pointer; margin: 0;
     }
-    .rt-cell-with-radio {
-      display: flex !important;
-      align-items: center;
-      gap: 6px;
-    }
-    .rt-cell-with-radio .rt-cell-val { flex: 1; text-align: right; }
-    .rt-cell-with-radio .rt-override-wrap { flex: 1; }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
@@ -7856,8 +7854,7 @@
               td.className = 'rt-cell';
 
               if (isOverride) {
-                td.classList.add('rt-cell-with-radio');
-                td.style.padding = '8px 6px';
+                td.style.padding = '8px 6px 8px 22px';
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = 'override'; radioEl.className = 'rt-radio';
@@ -7895,7 +7892,7 @@
                 td.appendChild(radioEl); td.appendChild(wrap);
 
               } else if (isCurrent || isRecommended) {
-                td.classList.add('rt-cell-with-radio');
+                td.style.padding = '8px 6px 8px 22px';
                 var radioKey = row.lb.toLowerCase();
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
@@ -7905,13 +7902,10 @@
                   if (this.checked) radioValues[di] = this.value;
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
-                var valSpan = document.createElement('span');
-                valSpan.className = 'rt-cell-val';
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
-                  var cs = document.createElement('span'); cs.className = 'rt-cur'; cs.textContent = val[0];
-                  valSpan.appendChild(cs); valSpan.appendChild(document.createTextNode(val.slice(1)));
-                } else { valSpan.textContent = val; }
-                td.appendChild(radioEl); td.appendChild(valSpan);
+                  td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
+                } else { td.textContent = val; }
+                td.appendChild(radioEl);
 
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
