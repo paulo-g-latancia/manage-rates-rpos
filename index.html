@@ -8146,7 +8146,7 @@
 
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
-                var nv = recommendedApplied[di] ? recDbVal(row, hotelId, selId, di, d, radioValues[di] === 'override' ? overrideValues[di] : null) : null;
+                var nv = (recommendedApplied[di] && !(isLoading && loadingCol === di)) ? recDbVal(row, hotelId, selId, di, d, radioValues[di] === 'override' ? overrideValues[di] : null) : null;
                 if (nv) {
                   var ovSpan = document.createElement('span'); ovSpan.className = 'rt-val-old';
                   ovSpan.textContent = val; td.appendChild(ovSpan);
