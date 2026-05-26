@@ -7809,27 +7809,60 @@
       var recommendedApplied = {};
       var overrideApplied = {};
 
-      function recDbVal(row, hotelId, segId, di, d) {
+      function recDbVal(row, hotelId, segId, di, d, overrideRaw) {
         var lb = row.lb;
         var h = HOTELS_DB[hotelId]; if (!h) return null;
-        var TRACKED = {
-          'Room Revenue':     [1.04, 1.08],
-          'Net Room Revenue': [1.05, 1.09],
-          'Net ADR':          [1.04, 1.07],
-          'Net RevPAR':       [1.04, 1.07],
-          'Cost of Acquisition': [1.03, 1.06],
-          'BAR':              [0.94, 0.97],
-          'Room Nights':      [0.94, 0.97],
-          '%':                [0.94, 0.97],
-          'Remaining Rooms':  [1.04, 1.08],
-          'Standard Queen':   [1.04, 1.08],
-          'Standard King':    [1.04, 1.08],
-          'Double':           [1.04, 1.08],
-          'Junior Suite':     [1.04, 1.08]
-        };
-        var range = TRACKED[lb]; if (!range) return null;
-        var seed = dbHash(hotelId + segId + lb + di + 9173);
-        var factor = range[0] + rnd(seed) * (range[1] - range[0]);
+        var factor;
+
+        if (overrideRaw) {
+          /* Override mode: derive factor from actual rate change ratio */
+          var overrideNum = parseFloat(overrideRaw);
+          if (isNaN(overrideNum) || overrideNum <= 0) return null;
+          /* Reconstruct the current rate for this column (same formula as dbVal 'Current') */
+          var st = segId.indexOf('-') < 0 ? segId : segId.slice(segId.indexOf('-') + 1);
+          var sMult = SEG_RATE_MULT[st] || 1.00;
+          var dow = d.getDay(); var isWe = (dow === 5 || dow === 6 || dow === 0);
+          var wknd = isWe ? 1.18 : 1.0;
+          var rSeedC = dbHash(hotelId + segId + 'Current' + di);
+          var rVarC  = 0.93 + rnd(rSeedC) * 0.14;
+          var currentRate = h.base * sMult * wknd * rVarC;
+          var delta = (overrideNum - currentRate) / currentRate; /* e.g. +0.15 for +15% */
+          /* Revenue rows: partial pass-through (rate gain minus demand loss) */
+          var REV = { 'Room Revenue':0.70, 'Net Room Revenue':0.75, 'Net ADR':0.85, 'Net RevPAR':0.70, 'Cost of Acquisition':0.70 };
+          /* Occupancy rows: inverse demand elasticity */
+          var OCC = { 'BAR':-0.40, 'Room Nights':-0.40, '%':-0.40 };
+          /* Remaining rooms: mirror of occupancy */
+          var REM = { 'Remaining Rooms':0.35 };
+          /* Room types: scale directly with the rate change */
+          var RT  = { 'Standard Queen':1, 'Standard King':1, 'Double':1, 'Junior Suite':1 };
+          if (REV[lb] !== undefined)      { factor = 1 + delta * REV[lb]; }
+          else if (OCC[lb] !== undefined) { factor = 1 + delta * OCC[lb]; }
+          else if (REM[lb] !== undefined) { factor = 1 + delta * REM[lb]; }
+          else if (RT[lb]  !== undefined) { factor = overrideNum / currentRate; }
+          else { return null; }
+          factor = Math.max(0.05, factor); /* floor at 5% — prevents nonsensical negatives */
+        } else {
+          /* Recommended mode: seed-based fixed multipliers */
+          var TRACKED = {
+            'Room Revenue':     [1.04, 1.08],
+            'Net Room Revenue': [1.05, 1.09],
+            'Net ADR':          [1.04, 1.07],
+            'Net RevPAR':       [1.04, 1.07],
+            'Cost of Acquisition': [1.03, 1.06],
+            'BAR':              [0.94, 0.97],
+            'Room Nights':      [0.94, 0.97],
+            '%':                [0.94, 0.97],
+            'Remaining Rooms':  [1.04, 1.08],
+            'Standard Queen':   [1.04, 1.08],
+            'Standard King':    [1.04, 1.08],
+            'Double':           [1.04, 1.08],
+            'Junior Suite':     [1.04, 1.08]
+          };
+          var range = TRACKED[lb]; if (!range) return null;
+          var seed = dbHash(hotelId + segId + lb + di + 9173);
+          factor = range[0] + rnd(seed) * (range[1] - range[0]);
+        }
+
         var oldStr = dbVal(row, hotelId, segId, di, d);
         if (!oldStr) return null;
         if (oldStr[0] === '€' || oldStr[0] === '£' || oldStr[0] === '$') {
@@ -7838,7 +7871,7 @@
         }
         if (oldStr.slice(-1) === '%') {
           var n = parseFloat(oldStr); if (isNaN(n)) return null;
-          return fmtPct(n * factor);
+          return fmtPct(Math.min(99, n * factor));
         }
         var n = parseFloat(oldStr); if (isNaN(n)) return null;
         return fmtInt(n * factor);
@@ -8113,7 +8146,7 @@
 
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
-                var nv = recommendedApplied[di] ? recDbVal(row, hotelId, selId, di, d) : null;
+                var nv = recommendedApplied[di] ? recDbVal(row, hotelId, selId, di, d, radioValues[di] === 'override' ? overrideValues[di] : null) : null;
                 if (nv) {
                   var ovSpan = document.createElement('span'); ovSpan.className = 'rt-val-old';
                   ovSpan.textContent = val; td.appendChild(ovSpan);
