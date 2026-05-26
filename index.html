@@ -8012,25 +8012,38 @@
                 cur.className = 'rt-override-cur'; cur.textContent = hCur;
                 var inp = document.createElement('input');
                 inp.type = 'text'; inp.className = 'rt-override-input';
+                var overrideDebounce = null;
+                function triggerOverrideLoad(fmt) {
+                  if (fmt && radioValues[di] === 'override' && !isLoading && overrideApplied[di] !== fmt) {
+                    selectedCol = di; startLoading(di);
+                  }
+                }
                 inp.addEventListener('focus', function() { this.select(); });
                 inp.addEventListener('input', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   var dot = raw.indexOf('.');
                   if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
                   this.value = raw; overrideValues[di] = raw; updatePublishBtn();
+                  clearTimeout(overrideDebounce);
+                  if (raw && raw !== '.') {
+                    var captured = raw;
+                    overrideDebounce = setTimeout(function() {
+                      var fmt = !isNaN(parseFloat(captured)) ? parseFloat(captured).toFixed(2) : '';
+                      triggerOverrideLoad(fmt);
+                    }, 800);
+                  }
                 });
                 inp.addEventListener('keydown', function(e) {
                   if (e.key === 'Enter') this.blur();
                 });
                 inp.addEventListener('blur', function() {
+                  clearTimeout(overrideDebounce);
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   if (!raw || raw === '.') { overrideValues[di] = ''; this.value = ''; updatePublishBtn(); return; }
                   var num = parseFloat(raw);
                   var fmt = !isNaN(num) ? num.toFixed(2) : '';
                   overrideValues[di] = fmt; this.value = fmt; updatePublishBtn();
-                  if (radioValues[di] === 'override' && !isLoading && overrideApplied[di] !== fmt) {
-                    selectedCol = di; startLoading(di);
-                  }
+                  triggerOverrideLoad(fmt);
                 });
                 inp.value = overrideValues[di] || '';
                 radioEl.addEventListener('change', function() {
