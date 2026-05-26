@@ -493,6 +493,15 @@
       padding: 10px;
     }
 
+    .mc-panel-title {
+      flex-shrink: 0;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1c1c1c;
+      padding: 2px 4px 0;
+    }
+
     .mc-chart-placeholder {
       font-size: 14px;
       font-style: italic;
@@ -2690,6 +2699,7 @@
 
         <!-- Charts panel -->
         <div class="mc-charts-panel" id="mc-charts-panel">
+          <div class="mc-panel-title" id="mc-panel-title"></div>
           <div class="mc-chart-box">
             <span class="mc-chart-placeholder">Cumulative Booking Curve placeholder</span>
           </div>
@@ -7721,6 +7731,10 @@
         var hotelId = selId.split('-')[0];
         var dates = getDates();
         var months = groupMonths(dates);
+        var titleEl = document.getElementById('mc-panel-title');
+        if (titleEl && dates[selectedCol]) {
+          titleEl.textContent = dates[selectedCol].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+        }
         var colCells = {};
         var hovCol = -1;
         var wrap = document.getElementById('rt-wrap');
