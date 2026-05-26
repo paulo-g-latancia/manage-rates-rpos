@@ -7805,6 +7805,7 @@
       var radioValues = {};
       var isLoading = false;
       var loadingCol = -1;
+      var loadingSource = null;
       var recommendedApplied = {};
       var overrideApplied = {};
 
@@ -7843,11 +7844,11 @@
         return fmtInt(n * factor);
       }
 
-      function startLoading(colIdx) {
-        isLoading = true; loadingCol = colIdx;
+      function startLoading(colIdx, source) {
+        isLoading = true; loadingCol = colIdx; loadingSource = source || null;
         build();
         setTimeout(function() {
-          isLoading = false; loadingCol = -1;
+          isLoading = false; loadingCol = -1; loadingSource = null;
           recommendedApplied[colIdx] = true;
           overrideApplied[colIdx] = overrideValues[colIdx] || null;
           build();
@@ -8015,7 +8016,7 @@
                 var overrideDebounce = null;
                 function triggerOverrideLoad(fmt) {
                   if (fmt && radioValues[di] === 'override' && !isLoading && overrideApplied[di] !== fmt) {
-                    selectedCol = di; startLoading(di);
+                    selectedCol = di; startLoading(di, 'override');
                   }
                 }
                 inp.addEventListener('focus', function() { this.select(); });
@@ -8061,9 +8062,9 @@
                 });
                 wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
-                if (isLoading && loadingCol === di) wrap.style.marginRight = '20px';
+                if (isLoading && loadingCol === di && loadingSource === 'override') wrap.style.marginRight = '20px';
                 td.appendChild(radioEl); td.appendChild(wrap);
-                if (isLoading && loadingCol === di) {
+                if (isLoading && loadingCol === di && loadingSource === 'override') {
                   var spinner = document.createElement('span');
                   spinner.className = 'rt-spinner';
                   td.appendChild(spinner);
@@ -8084,7 +8085,7 @@
                   if (isLoading) return;
                   var wasRec = (radioValues[di] === 'recommended');
                   radioEl.checked = true; radioValues[di] = radioKey;
-                  if (isRecommended && !wasRec) { selectedCol = di; startLoading(di); } else updatePublishBtn();
+                  if (isRecommended && !wasRec) { selectedCol = di; startLoading(di, 'recommended'); } else updatePublishBtn();
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
@@ -8102,7 +8103,7 @@
                   explainBtn.appendChild(explainIcon);
                   explainBtn.appendChild(tooltip);
                   td.appendChild(explainBtn);
-                  if (isLoading && loadingCol === di) {
+                  if (isLoading && loadingCol === di && loadingSource === 'recommended') {
                     var spinner = document.createElement('span');
                     spinner.className = 'rt-spinner';
                     td.appendChild(spinner);
