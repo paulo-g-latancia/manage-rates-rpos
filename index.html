@@ -7856,7 +7856,7 @@
               td.className = 'rt-cell';
 
               if (isOverride) {
-                td.style.padding = '8px 6px 8px 22px';
+                td.style.padding = '8px 6px 8px 28px';
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = 'override'; radioEl.className = 'rt-radio';
@@ -7899,7 +7899,7 @@
                 td.appendChild(radioEl); td.appendChild(wrap);
 
               } else if (isCurrent || isRecommended) {
-                td.style.padding = '8px 6px 8px 22px';
+                td.style.padding = '8px 6px 8px 28px';
                 var radioKey = row.lb.toLowerCase();
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
