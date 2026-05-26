@@ -774,6 +774,27 @@
     }
     .rt-radio.rt-radio-dim { accent-color: #636e72; }
 
+    /* Loading spinner */
+    @keyframes rt-spin { to { transform: rotate(360deg); } }
+    .rt-spinner {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 13px; height: 13px;
+      border: 2px solid rgba(36,139,134,0.2);
+      border-top-color: #248b86;
+      border-radius: 50%;
+      animation: rt-spin 0.65s linear infinite;
+      pointer-events: none;
+    }
+    /* Disabled state during loading */
+    .rt-table-loading .rt-radio       { pointer-events: none; opacity: 0.3; }
+    .rt-table-loading .rt-override-wrap { pointer-events: none; opacity: 0.4; }
+    .rt-table-loading .rt-rec-explain  { opacity: 0 !important; pointer-events: none; }
+    /* Before / after metric values */
+    .rt-val-old { color: #b0bbbf; text-decoration: line-through; margin-right: 4px; }
+
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
       display: flex;
@@ -7779,6 +7800,50 @@
       var focusOverrideAfterBuild = false;
       var overrideValues = {};
       var radioValues = {};
+      var isLoading = false;
+      var loadingCol = -1;
+      var recommendedApplied = {};
+
+      function recDbVal(row, hotelId, segId, di, d) {
+        var lb = row.lb;
+        var h = HOTELS_DB[hotelId]; if (!h) return null;
+        var TRACKED = {
+          'Room Revenue':     [1.04, 1.08],
+          'Net Room Revenue': [1.05, 1.09],
+          'Net ADR':          [1.04, 1.07],
+          'Net RevPAR':       [1.04, 1.07],
+          'Cost of Acquisition': [1.03, 1.06],
+          'BAR':              [0.94, 0.97],
+          'Room Nights':      [0.94, 0.97],
+          '%':                [0.94, 0.97],
+          'Remaining Rooms':  [1.04, 1.08]
+        };
+        var range = TRACKED[lb]; if (!range) return null;
+        var seed = dbHash(hotelId + segId + lb + di + 9173);
+        var factor = range[0] + rnd(seed) * (range[1] - range[0]);
+        var oldStr = dbVal(row, hotelId, segId, di, d);
+        if (!oldStr) return null;
+        if (oldStr[0] === '€' || oldStr[0] === '£' || oldStr[0] === '$') {
+          var n = parseFloat(oldStr.slice(1).replace(/,/g, '')); if (isNaN(n)) return null;
+          return fmtMoney(oldStr[0], n * factor);
+        }
+        if (oldStr.slice(-1) === '%') {
+          var n = parseFloat(oldStr); if (isNaN(n)) return null;
+          return fmtPct(n * factor);
+        }
+        var n = parseFloat(oldStr); if (isNaN(n)) return null;
+        return fmtInt(n * factor);
+      }
+
+      function startLoading(colIdx) {
+        isLoading = true; loadingCol = colIdx;
+        build();
+        setTimeout(function() {
+          isLoading = false; loadingCol = -1;
+          recommendedApplied[colIdx] = true;
+          build();
+        }, 2000);
+      }
 
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
@@ -7798,6 +7863,7 @@
 
         var tbl = document.createElement('table');
         tbl.className = 'rt-table';
+        if (isLoading) tbl.classList.add('rt-table-loading');
 
         /* THEAD */
         var thead = document.createElement('thead');
@@ -7842,7 +7908,7 @@
           dth.className = isWknd(d) ? 'rt-wknd' : '';
           if (di === selectedCol) dth.classList.add('rt-sel-col');
           dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
-          dth.addEventListener('click', function() { selectedCol = di; focusOverrideAfterBuild = (radioValues[di] === 'override'); build(); });
+          dth.addEventListener('click', function() { if (isLoading) return; selectedCol = di; focusOverrideAfterBuild = (radioValues[di] === 'override'); build(); });
           colCells[di] = colCells[di] || [];
           colCells[di].push(dth);
           dr.appendChild(dth);
@@ -7929,10 +7995,12 @@
                   if (this.checked) { radioValues[di] = 'override'; inp.focus(); }
                 });
                 wrap.addEventListener('click', function() {
+                  if (isLoading) return;
                   radioEl.checked = true; radioValues[di] = 'override';
                   if (selectedCol === di) inp.focus();
                 });
                 td.addEventListener('click', function() {
+                  if (isLoading) return;
                   radioEl.checked = true; radioValues[di] = 'override';
                   if (selectedCol === di) inp.focus();
                 });
@@ -7952,7 +8020,10 @@
                   if (this.checked) radioValues[di] = this.value;
                 });
                 td.addEventListener('click', function() {
+                  if (isLoading) return;
+                  var wasRec = (radioValues[di] === 'recommended');
                   radioEl.checked = true; radioValues[di] = radioKey;
+                  if (isRecommended && !wasRec) startLoading(di);
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
@@ -7970,12 +8041,24 @@
                   explainBtn.appendChild(explainIcon);
                   explainBtn.appendChild(tooltip);
                   td.appendChild(explainBtn);
+                  if (isLoading && loadingCol === di) {
+                    var spinner = document.createElement('span');
+                    spinner.className = 'rt-spinner';
+                    td.appendChild(spinner);
+                  }
                 }
                 td.appendChild(radioEl);
 
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
-                if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
+                var nv = recommendedApplied[di] ? recDbVal(row, hotelId, selId, di, d) : null;
+                if (nv) {
+                  var ovSpan = document.createElement('span'); ovSpan.className = 'rt-val-old';
+                  ovSpan.textContent = val; td.appendChild(ovSpan);
+                  td.appendChild(document.createTextNode(' '));
+                  var nvSpan = document.createElement('span'); nvSpan.textContent = nv;
+                  td.appendChild(nvSpan);
+                } else if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
                   td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
                 } else { td.textContent = val; }
               }
@@ -7995,6 +8078,7 @@
               });
               td.addEventListener('mouseleave', function() { this.classList.remove('rt-cell-hov'); });
               td.addEventListener('click', function() {
+                if (isLoading) return;
                 if (selectedCol !== di) {
                   selectedCol = di;
                   focusOverrideAfterBuild = (radioValues[di] === 'override');
