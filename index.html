@@ -7891,6 +7891,12 @@
         tbl.className = 'rt-table';
         if (isLoading) tbl.classList.add('rt-table-loading');
 
+        /* COLGROUP — locks column widths regardless of row collapse state */
+        var cg = document.createElement('colgroup');
+        var lcCol = document.createElement('col'); lcCol.style.width = '240px'; cg.appendChild(lcCol);
+        dates.forEach(function() { var c = document.createElement('col'); c.style.width = '88px'; cg.appendChild(c); });
+        tbl.appendChild(cg);
+
         /* THEAD */
         var thead = document.createElement('thead');
 
