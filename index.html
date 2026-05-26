@@ -7896,6 +7896,37 @@
       var recommendedApplied = {};
       var overrideApplied = {};
 
+      /* Per-selection state isolation */
+      var currentSelId = null;
+      var stateBySelection = {};
+
+      function saveSelState(selId) {
+        stateBySelection[selId] = {
+          selectedCol:      selectedCol,
+          overrideValues:   overrideValues,
+          radioValues:      radioValues,
+          recommendedApplied: recommendedApplied,
+          overrideApplied:  overrideApplied
+        };
+      }
+
+      function loadSelState(selId) {
+        if (stateBySelection[selId]) {
+          var s = stateBySelection[selId];
+          selectedCol        = s.selectedCol;
+          overrideValues     = s.overrideValues;
+          radioValues        = s.radioValues;
+          recommendedApplied = s.recommendedApplied;
+          overrideApplied    = s.overrideApplied;
+        } else {
+          selectedCol        = 0;
+          overrideValues     = {};
+          radioValues        = {};
+          recommendedApplied = {};
+          overrideApplied    = {};
+        }
+      }
+
       function recDbVal(row, hotelId, segId, di, d, overrideRaw) {
         var lb = row.lb;
         var h = HOTELS_DB[hotelId]; if (!h) return null;
@@ -7990,11 +8021,18 @@
 
       function countChanges() {
         var n = 0;
-        Object.keys(recommendedApplied).forEach(function(di) {
-          if (recommendedApplied[di] && radioValues[di] === 'recommended') n++;
-        });
-        Object.keys(overrideValues).forEach(function(di) {
-          if (overrideValues[di] && radioValues[di] === 'override') n++;
+        function tally(ra, ov) {
+          Object.keys(ra).forEach(function(di) { if (ra[di] && ov.radioValues[di] === 'recommended') n++; });
+          Object.keys(ov.overrideValues).forEach(function(di) { if (ov.overrideValues[di] && ov.radioValues[di] === 'override') n++; });
+        }
+        /* Current in-memory state */
+        tally(recommendedApplied, { radioValues: radioValues, overrideValues: overrideValues });
+        /* All saved selections */
+        Object.keys(stateBySelection).forEach(function(sid) {
+          if (sid !== currentSelId) {
+            var s = stateBySelection[sid];
+            tally(s.recommendedApplied, { radioValues: s.radioValues, overrideValues: s.overrideValues });
+          }
         });
         return n;
       }
@@ -8010,6 +8048,16 @@
 
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
+
+        /* When selection changes: persist old state, load (or default) new state */
+        if (selId !== currentSelId) {
+          if (currentSelId !== null) saveSelState(currentSelId);
+          isLoading = false; loadingCol = -1; loadingSource = null;
+          focusOverrideAfterBuild = false;
+          currentSelId = selId;
+          loadSelState(selId);
+        }
+
         var hotelId = selId.split('-')[0];
         var hCur = (HOTELS_DB[hotelId] && HOTELS_DB[hotelId].cur) || '€';
         var dates = getDates();
