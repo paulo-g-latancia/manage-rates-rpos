@@ -2864,11 +2864,11 @@
             <div class="mc-chart-title-row">
               <span class="mc-chart-title">Optimal Rate Finder</span>
               <div class="mc-chart-legend">
-                <span class="mc-leg"><span class="mc-leg-dot" style="background:#9fa8ad"></span>Current</span>
-                <span class="mc-leg"><span class="mc-leg-dot" style="background:#248b86"></span>Rec.</span>
+                <span class="mc-leg"><span class="mc-leg-line" style="background:#248b86"></span>Revenue</span>
+                <span class="mc-leg"><span class="mc-leg-line" style="background:#FF5900"></span>Occupancy</span>
               </div>
             </div>
-            <canvas id="chart-rate"></canvas>
+            <canvas id="chart-rate" style="cursor:pointer"></canvas>
           </div>
         </div>
 
@@ -7976,6 +7976,18 @@
         }, 2000);
       }
 
+      /* Exposed for chart click-to-override interaction */
+      window.rposTable = {
+        setOverrideFromChart: function(col, rate) {
+          var fmt = parseFloat(rate).toFixed(2);
+          selectedCol = col;
+          overrideValues[col] = fmt;
+          radioValues[col]    = 'override';
+          overrideApplied[col] = null;
+          startLoading(col, 'override');
+        }
+      };
+
       function countChanges() {
         var n = 0;
         Object.keys(recommendedApplied).forEach(function(di) {
@@ -8470,29 +8482,34 @@
         var bd = _bd;
         if (!bd) return;
 
+        /* X axis: position i maps to (i) days before arrival.
+           i=0 (left)=arrival day, i=DAYS (right)=farthest-out.
+           Data plotted: bd.ty[DAYS-i] — curve is DECREASING left→right. */
         function xAt(i) { return mg.l + (i / DAYS) * cW; }
         function yAt(f) { return mg.t + (1 - f) * cH; }
+        /* Reverse helper: chart position i → data index */
+        function dAt(i) { return DAYS - i; }
 
         ctx.clearRect(0, 0, W, H);
 
-        /* grid lines */
+        /* grid */
         ctx.strokeStyle = GRID; ctx.lineWidth = 1;
         for (var g = 0; g <= 4; g++) {
           var gy = mg.t + (g / 4) * cH;
           ctx.beginPath(); ctx.moveTo(mg.l, gy); ctx.lineTo(W - mg.r, gy); ctx.stroke();
         }
 
-        /* y labels */
+        /* y labels (rooms) */
         ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
         for (var g = 0; g <= 4; g++) {
           var v = Math.round(bd.rooms * (4 - g) / 4);
           ctx.fillText(g < 4 ? v : 0, mg.l - 4, mg.t + (g / 4) * cH + 3);
         }
 
-        /* x labels */
+        /* x labels: arrival on left, 60d on right */
         ctx.textAlign = 'center';
-        [60, 45, 30, 15, 0].forEach(function (dOut) {
-          ctx.fillText(dOut === 0 ? 'Arr.' : dOut + 'd', xAt(DAYS - dOut), H - 6);
+        [0, 15, 30, 45, 60].forEach(function (dOut, gi) {
+          ctx.fillText(dOut === 0 ? 'Arr.' : dOut + 'd', mg.l + (gi / 4) * cW, H - 6);
         });
 
         /* area fill under This Year */
@@ -8500,31 +8517,30 @@
         grad.addColorStop(0, 'rgba(36,139,134,0.13)');
         grad.addColorStop(1, 'rgba(36,139,134,0.02)');
         ctx.beginPath();
-        bd.ty.forEach(function (f, i) {
-          var x = xAt(i), y = yAt(f);
+        for (var i = 0; i <= DAYS; i++) {
+          var x = xAt(i), y = yAt(bd.ty[dAt(i)]);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
+        }
         ctx.lineTo(xAt(DAYS), H - mg.b); ctx.lineTo(xAt(0), H - mg.b); ctx.closePath();
         ctx.fillStyle = grad; ctx.fill();
 
-        /* lines */
+        /* lines — draw reversed */
         function drawLine(pts, color, dash) {
           ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.75;
           ctx.setLineDash(dash ? [4, 3] : []);
-          pts.forEach(function (f, i) {
-            var x = xAt(i), y = yAt(f);
+          for (var i = 0; i <= DAYS; i++) {
+            var x = xAt(i), y = yAt(pts[dAt(i)]);
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-          });
+          }
           ctx.stroke(); ctx.setLineDash([]);
         }
         drawLine(bd.budget, ORANGE, true);
         drawLine(bd.ly, GREY, false);
         drawLine(bd.ty, TEAL, false);
 
-        /* "now" marker — where today sits relative to stay date */
-        var todayI = DAYS - _di; // index of today
+        /* "now" marker: today is _di days before stay → position i=_di */
         if (_di > 0 && _di <= DAYS) {
-          var nx = xAt(todayI);
+          var nx = xAt(_di);
           ctx.save();
           ctx.strokeStyle = '#c0c7c9'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
           ctx.beginPath(); ctx.moveTo(nx, mg.t + 4); ctx.lineTo(nx, H - mg.b); ctx.stroke();
@@ -8539,7 +8555,7 @@
           ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(hx, mg.t); ctx.lineTo(hx, H - mg.b); ctx.stroke();
           [[bd.ty, TEAL], [bd.ly, GREY], [bd.budget, ORANGE]].forEach(function (s) {
-            var hy = yAt(s[0][hoverIdx]);
+            var hy = yAt(s[0][dAt(hoverIdx)]);
             ctx.beginPath(); ctx.arc(hx, hy, 3.5, 0, Math.PI * 2);
             ctx.fillStyle = s[1]; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -8549,6 +8565,8 @@
 
       /* ═══════════════════════════════════════════════════
          CHART 2 — OPTIMAL RATE FINDER
+         Two lines: Revenue (teal, left axis) + Occupancy (orange, right axis)
+         Click on chart → sets override for selected stay date
          ═══════════════════════════════════════════════ */
       var _rDim = null;
 
@@ -8556,7 +8574,7 @@
         var cv = prepCanvas('chart-rate');
         if (!cv) return;
         var ctx = cv.ctx, W = cv.W, H = cv.H;
-        var mg  = { l: 44, r: 10, t: 16, b: 28 };
+        var mg  = { l: 44, r: 32, t: 16, b: 26 };
         var cW  = W - mg.l - mg.r;
         var cH  = H - mg.t - mg.b;
         _rDim   = { mg: mg, cW: cW, cH: cH, W: W, H: H };
@@ -8564,12 +8582,14 @@
         var rd = _rd;
         if (!rd) return;
 
-        var STEPS  = rd.steps;
-        var maxRev = Math.max.apply(null, rd.revs) * 1.06;
+        var STEPS   = rd.steps;
+        var maxRev  = Math.max.apply(null, rd.revs) * 1.06;
+        var maxOcc  = Math.max.apply(null, rd.occs); // already ≤ 0.99
 
-        function xAt(i)   { return mg.l + (i / STEPS) * cW; }
-        function xAtR(r)  { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
-        function yAt(rev) { return mg.t + (1 - rev / maxRev) * cH; }
+        function xAt(i)    { return mg.l + (i / STEPS) * cW; }
+        function xAtR(r)   { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
+        function yAtRev(v) { return mg.t + (1 - v / maxRev) * cH; }
+        function yAtOcc(o) { return mg.t + (1 - o / maxOcc) * cH; }
         function rToIdx(r) {
           return Math.max(0, Math.min(STEPS,
             Math.round(((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * STEPS)));
@@ -8584,77 +8604,96 @@
           ctx.beginPath(); ctx.moveTo(mg.l, gy); ctx.lineTo(W - mg.r, gy); ctx.stroke();
         }
 
-        /* y labels */
-        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
+        /* left y labels — Revenue */
+        ctx.fillStyle = TEAL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
         for (var g = 0; g <= 4; g++) {
-          var v = (maxRev * (4 - g)) / 4;
-          var lbl = v >= 10000 ? (Math.round(v / 1000)) + 'k'
+          var v   = (maxRev * (4 - g)) / 4;
+          var lbl = v >= 10000 ? Math.round(v / 1000) + 'k'
                   : v >= 1000  ? (Math.round(v / 100) / 10) + 'k'
                   : Math.round(v);
           ctx.fillText(rd.cur + lbl, mg.l - 4, mg.t + (g / 4) * cH + 3);
         }
 
-        /* x labels — 5 evenly spaced rate values */
-        ctx.textAlign = 'center';
+        /* right y labels — Occupancy % */
+        ctx.fillStyle = ORANGE; ctx.textAlign = 'left';
         for (var g = 0; g <= 4; g++) {
-          var ri   = Math.round(g * STEPS / 4);
+          var pct = Math.round(maxOcc * (4 - g) / 4 * 100);
+          ctx.fillText(pct + '%', W - mg.r + 4, mg.t + (g / 4) * cH + 3);
+        }
+
+        /* x labels */
+        ctx.fillStyle = LABEL; ctx.textAlign = 'center';
+        for (var g = 0; g <= 4; g++) {
+          var ri = Math.round(g * STEPS / 4);
           ctx.fillText(rd.cur + Math.round(rd.rates[ri]), mg.l + (g / 4) * cW, H - 7);
         }
 
-        /* area fill */
+        /* Revenue area fill */
         var grad = ctx.createLinearGradient(0, mg.t, 0, H - mg.b);
-        grad.addColorStop(0, 'rgba(36,139,134,0.13)');
-        grad.addColorStop(1, 'rgba(36,139,134,0.02)');
+        grad.addColorStop(0, 'rgba(36,139,134,0.10)');
+        grad.addColorStop(1, 'rgba(36,139,134,0.01)');
         ctx.beginPath();
         rd.revs.forEach(function (v, i) {
-          var x = xAt(i), y = yAt(v);
+          var x = xAt(i), y = yAtRev(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.lineTo(xAt(STEPS), H - mg.b); ctx.lineTo(xAt(0), H - mg.b); ctx.closePath();
         ctx.fillStyle = grad; ctx.fill();
 
-        /* revenue curve */
+        /* Revenue line */
         ctx.beginPath(); ctx.strokeStyle = TEAL; ctx.lineWidth = 2; ctx.setLineDash([]);
         rd.revs.forEach(function (v, i) {
-          var x = xAt(i), y = yAt(v);
+          var x = xAt(i), y = yAtRev(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
-        /* hover crosshair + dot */
+        /* Occupancy line */
+        ctx.beginPath(); ctx.strokeStyle = ORANGE; ctx.lineWidth = 2; ctx.setLineDash([]);
+        rd.occs.forEach(function (o, i) {
+          var x = xAt(i), y = yAtOcc(o);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        /* hover crosshair + dots on both lines */
         if (hoverIdx !== undefined && hoverIdx >= 0 && hoverIdx <= STEPS) {
-          var hx = xAt(hoverIdx), hy = yAt(rd.revs[hoverIdx]);
+          var hx = xAt(hoverIdx);
           ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(hx, mg.t); ctx.lineTo(hx, H - mg.b); ctx.stroke();
-          ctx.beginPath(); ctx.arc(hx, hy, 3.5, 0, Math.PI * 2);
+          // Revenue dot
+          ctx.beginPath(); ctx.arc(hx, yAtRev(rd.revs[hoverIdx]), 3.5, 0, Math.PI * 2);
           ctx.fillStyle = TEAL; ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          // Occupancy dot
+          ctx.beginPath(); ctx.arc(hx, yAtOcc(rd.occs[hoverIdx]), 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = ORANGE; ctx.fill();
           ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
 
-        /* helper: marker dot + dashed vertical + label */
-        function marker(rate, dotFill, dotStroke, dotR) {
+        /* marker helper — dot on revenue line + dashed drop + label */
+        function marker(rate, dotFill, dotStroke) {
           var x  = xAtR(rate);
           var ri = rToIdx(rate);
-          var y  = yAt(rd.revs[ri]);
+          var y  = yAtRev(rd.revs[ri]);
           ctx.strokeStyle = dotFill; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.globalAlpha = 0.45;
-          ctx.beginPath(); ctx.moveTo(x, y + dotR + 2); ctx.lineTo(x, H - mg.b); ctx.stroke();
+          ctx.globalAlpha = 0.4;
+          ctx.beginPath(); ctx.moveTo(x, y + 7); ctx.lineTo(x, H - mg.b); ctx.stroke();
           ctx.globalAlpha = 1; ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
           ctx.fillStyle = dotFill; ctx.fill();
           ctx.strokeStyle = dotStroke; ctx.lineWidth = 1.5; ctx.stroke();
-          return { x: x, y: y };
+          return x;
         }
 
-        /* Current rate — grey outlined dot */
-        var curDot = marker(rd.curRate, '#fff', GREY, 5);
-        ctx.beginPath(); ctx.arc(curDot.x, curDot.y, 5, 0, Math.PI * 2);
+        var curX = marker('#fff', GREY, '#fff');
+        // Re-draw grey border on current (white fill, grey ring)
+        ctx.beginPath(); ctx.arc(xAtR(rd.curRate), yAtRev(rd.revs[rToIdx(rd.curRate)]), 5, 0, Math.PI * 2);
         ctx.strokeStyle = GREY; ctx.lineWidth = 2; ctx.stroke();
 
-        /* Recommended rate — teal filled dot */
-        marker(rd.recRate, TEAL, '#fff', 5);
+        marker(rd.recRate, TEAL, '#fff');
 
-        /* Labels below x-axis for both markers */
+        /* marker labels */
         ctx.font = 'bold 9px Lato,sans-serif'; ctx.textAlign = 'center';
         ctx.fillStyle = GREY;
         ctx.fillText(rd.cur + Math.round(rd.curRate), xAtR(rd.curRate), H - 1);
@@ -8662,7 +8701,7 @@
         ctx.fillText(rd.cur + Math.round(rd.recRate), xAtR(rd.recRate), H - 1);
       }
 
-      /* ─ Hover setup ─ */
+      /* ─ Hover + click setup ─ */
       function setupHovers() {
         var cvB = document.getElementById('chart-booking');
         var cvR = document.getElementById('chart-rate');
@@ -8674,14 +8713,15 @@
             var mx   = e.clientX - rect.left;
             var mg   = _bDim.mg;
             if (mx < mg.l || mx > _bDim.W - mg.r) { hideTip(); drawBooking(); return; }
-            var idx  = Math.max(0, Math.min(DAYS, Math.round(((mx - mg.l) / _bDim.cW) * DAYS)));
-            var dOut = DAYS - idx;
-            drawBooking(idx);
+            /* position i = days before arrival (0=arrival left, DAYS=far out right) */
+            var i    = Math.max(0, Math.min(DAYS, Math.round(((mx - mg.l) / _bDim.cW) * DAYS)));
+            var di   = DAYS - i; // data array index
+            drawBooking(i);
             showTip(e.clientX, e.clientY,
-              '<span style="color:#9fa8ad;font-size:10px">' + dOut + ' days out</span><br>' +
-              '<span style="color:' + TEAL   + '">&#9679;</span> This Yr: <b>' + Math.round(_bd.ty[idx]     * _bd.rooms) + '</b><br>' +
-              '<span style="color:' + GREY   + '">&#9679;</span> Last Yr: <b>' + Math.round(_bd.ly[idx]     * _bd.rooms) + '</b><br>' +
-              '<span style="color:' + ORANGE + '">&#8722;&#8722;</span> Budget: <b>' + Math.round(_bd.budget[idx] * _bd.rooms) + '</b>'
+              '<span style="color:#9fa8ad;font-size:10px">' + i + ' days out</span><br>' +
+              '<span style="color:' + TEAL   + '">&#9679;</span> This Yr: <b>' + Math.round(_bd.ty[di]     * _bd.rooms) + '</b><br>' +
+              '<span style="color:' + GREY   + '">&#9679;</span> Last Yr: <b>' + Math.round(_bd.ly[di]     * _bd.rooms) + '</b><br>' +
+              '<span style="color:' + ORANGE + '">&#8722;&#8722;</span> Budget: <b>' + Math.round(_bd.budget[di] * _bd.rooms) + '</b>'
             );
           });
           cvB.addEventListener('mouseleave', function () { hideTip(); drawBooking(); });
@@ -8700,12 +8740,24 @@
             var rev  = _rd.revs[idx];
             var occ  = _rd.occs[idx];
             showTip(e.clientX, e.clientY,
-              '<span style="color:#9fa8ad;font-size:10px">Rate: ' + _rd.cur + Math.round(rate) + '</span><br>' +
-              'Revenue: <b>' + _rd.cur + Math.round(rev).toLocaleString() + '</b><br>' +
-              'Occupancy: <b>' + Math.round(occ * 100) + '%</b>'
+              '<span style="color:#9fa8ad;font-size:10px">Rate: ' + _rd.cur + Math.round(rate) + ' &middot; click to apply</span><br>' +
+              '<span style="color:' + TEAL   + '">&#9679;</span> Revenue: <b>' + _rd.cur + Math.round(rev).toLocaleString() + '</b><br>' +
+              '<span style="color:' + ORANGE + '">&#9679;</span> Occupancy: <b>' + Math.round(occ * 100) + '%</b>'
             );
           });
           cvR.addEventListener('mouseleave', function () { hideTip(); drawRate(); });
+
+          /* Click → set override for selected stay date */
+          cvR.addEventListener('click', function (e) {
+            if (!_rDim || !_rd) return;
+            var rect = cvR.getBoundingClientRect();
+            var mx   = e.clientX - rect.left;
+            var mg   = _rDim.mg;
+            if (mx < mg.l || mx > _rDim.W - mg.r) return;
+            var idx  = Math.max(0, Math.min(_rd.steps, Math.round(((mx - mg.l) / _rDim.cW) * _rd.steps)));
+            var rate = _rd.rates[idx];
+            if (window.rposTable) window.rposTable.setOverrideFromChart(_di, rate);
+          });
         }
       }
 
