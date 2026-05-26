@@ -7806,6 +7806,7 @@
       var isLoading = false;
       var loadingCol = -1;
       var recommendedApplied = {};
+      var overrideApplied = {};
 
       function recDbVal(row, hotelId, segId, di, d) {
         var lb = row.lb;
@@ -7848,6 +7849,7 @@
         setTimeout(function() {
           isLoading = false; loadingCol = -1;
           recommendedApplied[colIdx] = true;
+          overrideApplied[colIdx] = overrideValues[colIdx] || null;
           build();
           updatePublishBtn();
         }, 2000);
@@ -8017,12 +8019,18 @@
                   if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
                   this.value = raw; overrideValues[di] = raw; updatePublishBtn();
                 });
+                inp.addEventListener('keydown', function(e) {
+                  if (e.key === 'Enter') this.blur();
+                });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   if (!raw || raw === '.') { overrideValues[di] = ''; this.value = ''; updatePublishBtn(); return; }
                   var num = parseFloat(raw);
                   var fmt = !isNaN(num) ? num.toFixed(2) : '';
                   overrideValues[di] = fmt; this.value = fmt; updatePublishBtn();
+                  if (radioValues[di] === 'override' && !isLoading && overrideApplied[di] !== fmt) {
+                    startLoading(di);
+                  }
                 });
                 inp.value = overrideValues[di] || '';
                 radioEl.addEventListener('change', function() {
@@ -8040,7 +8048,13 @@
                 });
                 wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
+                if (isLoading && loadingCol === di) wrap.style.marginRight = '20px';
                 td.appendChild(radioEl); td.appendChild(wrap);
+                if (isLoading && loadingCol === di) {
+                  var spinner = document.createElement('span');
+                  spinner.className = 'rt-spinner';
+                  td.appendChild(spinner);
+                }
 
               } else if (isCurrent || isRecommended) {
                 td.style.padding = '8px 6px 8px 28px';
