@@ -730,6 +730,7 @@
       width: 13px; height: 13px;
       cursor: pointer; margin: 0;
     }
+    .rt-radio.rt-radio-dim { accent-color: #b0bbbf; }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
@@ -7740,6 +7741,7 @@
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
         var hotelId = selId.split('-')[0];
+        var hCur = (HOTELS_DB[hotelId] && HOTELS_DB[hotelId].cur) || '€';
         var dates = getDates();
         var months = groupMonths(dates);
         var titleEl = document.getElementById('mc-panel-title');
@@ -7858,11 +7860,12 @@
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = 'override'; radioEl.className = 'rt-radio';
+                if (di !== selectedCol) radioEl.classList.add('rt-radio-dim');
                 radioEl.checked = (radioValues[di] === 'override');
                 var wrap = document.createElement('div');
                 wrap.className = 'rt-override-wrap';
                 var cur = document.createElement('span');
-                cur.className = 'rt-override-cur'; cur.textContent = '$';
+                cur.className = 'rt-override-cur'; cur.textContent = hCur;
                 var inp = document.createElement('input');
                 inp.type = 'text'; inp.className = 'rt-override-input';
                 inp.addEventListener('focus', function() { this.select(); });
@@ -7887,6 +7890,10 @@
                   radioEl.checked = true; radioValues[di] = 'override';
                   if (selectedCol === di) inp.focus();
                 });
+                td.addEventListener('click', function() {
+                  radioEl.checked = true; radioValues[di] = 'override';
+                  if (selectedCol === di) inp.focus();
+                });
                 wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
                 td.appendChild(radioEl); td.appendChild(wrap);
@@ -7897,9 +7904,13 @@
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = radioKey; radioEl.className = 'rt-radio';
-                radioEl.checked = (radioValues[di] === radioKey);
+                if (di !== selectedCol) radioEl.classList.add('rt-radio-dim');
+                radioEl.checked = ((radioValues[di] || 'current') === radioKey);
                 radioEl.addEventListener('change', function() {
                   if (this.checked) radioValues[di] = this.value;
+                });
+                td.addEventListener('click', function() {
+                  radioEl.checked = true; radioValues[di] = radioKey;
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
