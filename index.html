@@ -651,23 +651,37 @@
     .rt-section, .rt-subsection { cursor: pointer; }
 
     /* Override row inputs */
-    .rt-override-input {
-      display: block;
-      width: 100%;
+    .rt-override-wrap {
+      display: flex;
+      align-items: center;
       height: 24px;
       border: 1px solid #DDE1E2;
       border-radius: 2px;
       background: white;
+      box-sizing: border-box;
+    }
+    .rt-override-wrap:focus-within {
+      border-color: #248b86;
+      box-shadow: 0 0 0 1px #248b86;
+    }
+    .rt-override-cur {
+      flex-shrink: 0;
+      padding-left: 6px;
+      color: #9fa8ad;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+    }
+    .rt-override-input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      outline: none;
       text-align: right;
-      padding: 0 8px 0 4px;
+      padding: 0 8px 0 2px;
       font-family: 'Lato', sans-serif;
       font-size: 14px;
       color: #1c1c1c;
-      box-sizing: border-box;
-      outline: none;
-    }
-    .rt-override-input:focus {
-      border: 2px solid #248b86;
     }
 
     /* Data cells */
@@ -7813,31 +7827,35 @@
               td.className = 'rt-cell';
               if (isOverride) {
                 td.style.padding = '8px 6px';
+                var wrap = document.createElement('div');
+                wrap.className = 'rt-override-wrap';
+                var cur = document.createElement('span');
+                cur.className = 'rt-override-cur';
+                cur.textContent = '$';
                 var inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'rt-override-input';
-                inp.addEventListener('focus', function() {
-                  var raw = this.value.replace(/[^0-9.]/g, '');
-                  this.value = '$ ' + raw;
-                });
+                inp.addEventListener('focus', function() { this.select(); });
                 inp.addEventListener('input', function() {
-                  var raw = this.value.replace(/^\$\s*/, '').replace(/[^0-9.]/g, '');
+                  var raw = this.value.replace(/[^0-9.]/g, '');
                   var dot = raw.indexOf('.');
                   if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
-                  this.value = '$ ' + raw;
-                  overrideValues[di] = this.value;
+                  this.value = raw;
+                  overrideValues[di] = raw;
                 });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   if (!raw || raw === '.') { overrideValues[di] = ''; this.value = ''; return; }
                   var num = parseFloat(raw);
-                  var fmt = !isNaN(num) ? '$ ' + num.toFixed(2) : '';
+                  var fmt = !isNaN(num) ? num.toFixed(2) : '';
                   overrideValues[di] = fmt;
                   this.value = fmt;
                 });
                 inp.value = overrideValues[di] || '';
+                wrap.appendChild(cur);
+                wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
-                td.appendChild(inp);
+                td.appendChild(wrap);
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
