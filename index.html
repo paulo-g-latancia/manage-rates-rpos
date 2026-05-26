@@ -720,6 +720,18 @@
     td.rt-sel-col.rt-cell-hov            { box-shadow: inset 2px 0 0 #248b86, inset -2px 0 0 #248b86, inset 0 0 0 9999px rgba(36,139,134,0.14) !important; }
 
     .rt-cur { color: #9fa8ad; }
+    .rt-radio {
+      accent-color: #248b86;
+      width: 14px; height: 14px;
+      flex-shrink: 0; cursor: pointer; margin: 0;
+    }
+    .rt-cell-with-radio {
+      display: flex !important;
+      align-items: center;
+      gap: 6px;
+    }
+    .rt-cell-with-radio .rt-cell-val { flex: 1; text-align: right; }
+    .rt-cell-with-radio .rt-override-wrap { flex: 1; }
 
     /* ─── FILTER BAR ──────────────────────────────────── */
     .filter-bar {
@@ -7725,6 +7737,7 @@
       var selectedCol = 0;
       var focusOverrideAfterBuild = false;
       var overrideValues = {};
+      var radioValues = {};
 
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
@@ -7787,7 +7800,7 @@
           dth.className = isWknd(d) ? 'rt-wknd' : '';
           if (di === selectedCol) dth.classList.add('rt-sel-col');
           dth.textContent = DAY[d.getDay()] + ' ' + d.getDate();
-          dth.addEventListener('click', function() { selectedCol = di; focusOverrideAfterBuild = true; build(); });
+          dth.addEventListener('click', function() { selectedCol = di; focusOverrideAfterBuild = (radioValues[di] === 'override'); build(); });
           colCells[di] = colCells[di] || [];
           colCells[di].push(dth);
           dr.appendChild(dth);
@@ -7836,48 +7849,77 @@
             lc.appendChild(makeLabelInner(row, build));
             tr.appendChild(lc);
             var isOverride = row.lb === 'Override';
+            var isCurrent = row.lb === 'Current';
+            var isRecommended = row.lb === 'Recommended';
             dates.forEach(function(d, di) {
               var td = document.createElement('td');
               td.className = 'rt-cell';
+
               if (isOverride) {
+                td.classList.add('rt-cell-with-radio');
                 td.style.padding = '8px 6px';
+                var radioEl = document.createElement('input');
+                radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
+                radioEl.value = 'override'; radioEl.className = 'rt-radio';
+                radioEl.checked = (radioValues[di] === 'override');
                 var wrap = document.createElement('div');
                 wrap.className = 'rt-override-wrap';
                 var cur = document.createElement('span');
-                cur.className = 'rt-override-cur';
-                cur.textContent = '$';
+                cur.className = 'rt-override-cur'; cur.textContent = '$';
                 var inp = document.createElement('input');
-                inp.type = 'text';
-                inp.className = 'rt-override-input';
+                inp.type = 'text'; inp.className = 'rt-override-input';
                 inp.addEventListener('focus', function() { this.select(); });
                 inp.addEventListener('input', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   var dot = raw.indexOf('.');
                   if (dot !== -1) raw = raw.slice(0, dot + 1) + raw.slice(dot + 1).replace(/\./g, '');
-                  this.value = raw;
-                  overrideValues[di] = raw;
+                  this.value = raw; overrideValues[di] = raw;
                 });
                 inp.addEventListener('blur', function() {
                   var raw = this.value.replace(/[^0-9.]/g, '');
                   if (!raw || raw === '.') { overrideValues[di] = ''; this.value = ''; return; }
                   var num = parseFloat(raw);
                   var fmt = !isNaN(num) ? num.toFixed(2) : '';
-                  overrideValues[di] = fmt;
-                  this.value = fmt;
+                  overrideValues[di] = fmt; this.value = fmt;
                 });
                 inp.value = overrideValues[di] || '';
-                wrap.appendChild(cur);
-                wrap.appendChild(inp);
+                radioEl.addEventListener('change', function() {
+                  if (this.checked) { radioValues[di] = 'override'; inp.focus(); }
+                });
+                wrap.addEventListener('click', function() {
+                  radioEl.checked = true; radioValues[di] = 'override';
+                  if (selectedCol === di) inp.focus();
+                });
+                wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
-                td.appendChild(wrap);
+                td.appendChild(radioEl); td.appendChild(wrap);
+
+              } else if (isCurrent || isRecommended) {
+                td.classList.add('rt-cell-with-radio');
+                var radioKey = row.lb.toLowerCase();
+                var radioEl = document.createElement('input');
+                radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
+                radioEl.value = radioKey; radioEl.className = 'rt-radio';
+                radioEl.checked = (radioValues[di] === radioKey);
+                radioEl.addEventListener('change', function() {
+                  if (this.checked) radioValues[di] = this.value;
+                });
+                var val = dbVal(row, hotelId, selId, di, d);
+                var valSpan = document.createElement('span');
+                valSpan.className = 'rt-cell-val';
+                if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
+                  var cs = document.createElement('span'); cs.className = 'rt-cur'; cs.textContent = val[0];
+                  valSpan.appendChild(cs); valSpan.appendChild(document.createTextNode(val.slice(1)));
+                } else { valSpan.textContent = val; }
+                td.appendChild(radioEl); td.appendChild(valSpan);
+
               } else {
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
                   td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
-                } else {
-                  td.textContent = val;
-                }
+                } else { td.textContent = val; }
               }
+
               if (di === selectedCol) { td.classList.add('rt-sel-col'); lastSelColTd = td; }
               colCells[di] = colCells[di] || [];
               colCells[di].push(td);
@@ -7891,11 +7933,13 @@
                 }
                 this.classList.add('rt-cell-hov');
               });
-              td.addEventListener('mouseleave', function() {
-                this.classList.remove('rt-cell-hov');
-              });
+              td.addEventListener('mouseleave', function() { this.classList.remove('rt-cell-hov'); });
               td.addEventListener('click', function() {
-                if (selectedCol !== di) { selectedCol = di; focusOverrideAfterBuild = true; build(); }
+                if (selectedCol !== di) {
+                  selectedCol = di;
+                  focusOverrideAfterBuild = (radioValues[di] === 'override');
+                  build();
+                }
               });
               tr.appendChild(td);
             });
@@ -7940,7 +7984,6 @@
         }
       }
 
-      focusOverrideAfterBuild = true;
       build();
       if (window.rposNav) window.rposNav.onSelectionChange = build;
     })();
