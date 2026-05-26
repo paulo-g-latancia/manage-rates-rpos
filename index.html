@@ -776,12 +776,14 @@
     .rt-radio.rt-radio-dim { accent-color: #636e72; }
 
     /* Loading spinner */
-    @keyframes rt-spin { to { transform: rotate(360deg); } }
+    @keyframes rt-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
     .rt-spinner {
       position: absolute;
       right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
+      top: calc(50% - 6.5px);
       width: 13px; height: 13px;
       border: 2px solid rgba(36,139,134,0.2);
       border-top-color: #248b86;
