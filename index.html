@@ -8076,6 +8076,7 @@
 
         var tbl = document.createElement('table');
         tbl.className = 'rt-table';
+        tbl.style.width = (240 + dates.length * 56) + 'px';
         if (isLoading) tbl.classList.add('rt-table-loading');
 
         /* COLGROUP — locks column widths regardless of row collapse state */
