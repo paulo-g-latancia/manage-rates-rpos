@@ -895,21 +895,13 @@
     .re-con-row { display:flex; align-items:baseline; gap:4px; font-size:10px; color:#4f5b60; margin-bottom:2px; }
     .re-con-lbl { flex:1; }
     .re-con-val { flex-shrink:0; white-space:nowrap; text-align:right; }
-    .re-hist { padding:8px; }
-    .re-hist-title { font-size:11px; font-weight:700; color:#1c1c1c; letter-spacing:.5px; margin-bottom:3px; }
-    .re-hist-sub { font-size:10px; color:#4f5b60; margin-bottom:5px; }
-    .re-hist-row { display:flex; align-items:flex-start; gap:4px; margin-bottom:3px; }
-    .re-hist-row.cur .re-hist-time,
-    .re-hist-row.cur .re-hist-evt,
-    .re-hist-row.cur .re-hist-rate { font-weight:700; }
-    .re-hist-ic { font-size:12px; color:#9fa8ad; flex-shrink:0; line-height:1.2; }
-    .re-hist-ic.cur { color:#1c1c1c; }
-    .re-hist-time { font-size:10px; color:#4f5b60; width:60px; flex-shrink:0; }
-    .re-hist-evt { flex:1; font-size:11px; color:#1c1c1c; min-width:0; }
-    .re-hist-delta { font-size:11px; width:44px; text-align:right; flex-shrink:0; }
-    .re-hist-delta.pos { color:#388c3f; }
-    .re-hist-delta.neg { color:#d32f2f; }
-    .re-hist-rate { font-size:11px; width:40px; text-align:right; flex-shrink:0; color:#1c1c1c; }
+    .re-traj { padding:4px 8px 8px; }
+    .re-traj-hdr { display:flex; align-items:center; font-size:10px; margin-bottom:6px; font-family:'Lato',sans-serif; }
+    .re-traj-hdr-lbl { flex:1; font-weight:700; color:#1c1c1c; }
+    .re-traj-hdr-lbl span { font-weight:400; color:#4f5b60; }
+    .re-traj-cnt { font-size:10px; color:#4f5b60; white-space:nowrap; }
+    .re-traj-canvas { display:block; width:100%; }
+    .re-traj-caption { font-size:9px; color:#4f5b60; text-align:center; font-family:'Lato',sans-serif; margin-top:4px; }
     .re-foot { padding:8px 8px 12px; }
     .re-foot-btn { display:flex; align-items:center; justify-content:center; gap:4px; background:#d7f7ed; height:32px; border-radius:4px; font-size:12px; color:#006461; border:none; width:100%; font-family:'Lato',sans-serif; cursor:pointer; }
     .re-foot-btn:hover { background:#b8f0e0; }
@@ -8347,17 +8339,53 @@
         });
         panel.appendChild(cons); panel.appendChild(reDiv());
 
-        /* History */
-        var hs=el('div','re-hist'); hs.appendChild(el('div','re-hist-title','How this recommendation changed in the last 7 days?')); hs.appendChild(el('div','re-hist-sub',data.nUpdates+' updates · '+c+data.histStart+' → '+c+data.rec));
-        data.hist.forEach(function(entry){
-          var row=el('div','re-hist-row'+(entry.isCur?' cur':''));
-          var ic2=el('span','mi material-icons-round re-hist-ic'+(entry.isCur?' cur':'')); ic2.textContent=entry.isCur?'arrow_forward':'chevron_right'; ic2.style.fontSize='12px';
-          row.appendChild(ic2); row.appendChild(el('span','re-hist-time',entry.lbl)); row.appendChild(el('span','re-hist-evt',entry.evt));
-          if(entry.delta!==null){var de=el('span','re-hist-delta'+(entry.delta>=0?' pos':' neg'));de.textContent=(entry.delta>=0?'+':'−')+c+Math.abs(Math.round(entry.delta));row.appendChild(de);}
-          else{row.appendChild(el('span','re-hist-delta',''));}
-          row.appendChild(el('span','re-hist-rate',c+Math.round(entry.rate))); hs.appendChild(row);
-        });
-        panel.appendChild(hs); panel.appendChild(reDiv());
+        /* Rate Trajectory sparkline */
+        var traj=el('div','re-traj');
+        var trajHdr=el('div','re-traj-hdr');
+        var trajLbl=el('div','re-traj-hdr-lbl'); trajLbl.innerHTML='Rate Trajectory <span>· last 7 days</span>';
+        trajHdr.appendChild(trajLbl); trajHdr.appendChild(el('div','re-traj-cnt',data.nUpdates+' updates'));
+        traj.appendChild(trajHdr);
+        var trajWrap=el('div','re-traj-wrap');
+        var trajCvs=document.createElement('canvas'); trajCvs.className='re-traj-canvas'; trajCvs.style.height='46px';
+        trajWrap.appendChild(trajCvs); traj.appendChild(trajWrap);
+        var s0=data.hist[0].rate, sN=data.rec;
+        var dAmt=sN-s0, dPct=Math.round(dAmt/s0*100);
+        var capTxt=(dAmt>=0?'+':'−')+c+Math.abs(Math.round(dAmt))+' ('+(dPct>=0?'+':'')+dPct+'%) over 7 days · '+data.nUpdates+' recommendation adjustments';
+        traj.appendChild(el('div','re-traj-caption',capTxt));
+        panel.appendChild(traj); panel.appendChild(reDiv());
+        /* draw after layout so offsetWidth is known */
+        setTimeout(function(){
+          var W=trajCvs.offsetWidth||264; trajCvs.width=W; trajCvs.height=46;
+          var ctx=trajCvs.getContext('2d');
+          var rates=data.hist.map(function(h){return h.rate;});
+          var n=rates.length;
+          var minR=Math.min.apply(null,rates), maxR=Math.max.apply(null,rates), rng=maxR-minR||1;
+          var PL=30, PR=36, PT=16, PB=8;
+          var sw=W-PL-PR, sh=46-PT-PB;
+          function xAt(i){return PL+(i/(n-1))*sw;}
+          function yAt(r){return PT+(1-(r-minR)/rng)*sh;}
+          /* area fill */
+          ctx.beginPath();
+          rates.forEach(function(r,i){i===0?ctx.moveTo(xAt(i),yAt(r)):ctx.lineTo(xAt(i),yAt(r));});
+          ctx.lineTo(xAt(n-1),46-PB+4); ctx.lineTo(xAt(0),46-PB+4); ctx.closePath();
+          ctx.fillStyle='rgba(14,107,85,0.07)'; ctx.fill();
+          /* line */
+          ctx.beginPath(); ctx.strokeStyle='#0E6B55'; ctx.lineWidth=1.5; ctx.lineJoin='round';
+          rates.forEach(function(r,i){i===0?ctx.moveTo(xAt(i),yAt(r)):ctx.lineTo(xAt(i),yAt(r));});
+          ctx.stroke();
+          /* dots */
+          rates.forEach(function(r,i){
+            var isFinal=i===n-1;
+            ctx.beginPath(); ctx.fillStyle=isFinal?'#388c3f':'#0E6B55';
+            ctx.arc(xAt(i),yAt(r),isFinal?3.5:1.8,0,Math.PI*2); ctx.fill();
+          });
+          /* start label */
+          ctx.font='9px Lato,sans-serif'; ctx.fillStyle='#4f5b60'; ctx.textAlign='right'; ctx.textBaseline='middle';
+          ctx.fillText(c+Math.round(rates[0]),PL-3,yAt(rates[0]));
+          /* end label — bold teal, above the final dot */
+          ctx.font='bold 9px Lato,sans-serif'; ctx.fillStyle='#388c3f'; ctx.textAlign='left'; ctx.textBaseline='bottom';
+          ctx.fillText(c+Math.round(rates[n-1]),xAt(n-1)+4,yAt(rates[n-1])-3);
+        },0);
 
         /* Footer */
         var foot=el('div','re-foot'); var fb=el('button','re-foot-btn'); fb.appendChild(document.createTextNode('View full pricing activity ')); var fwIc=el('span','mi material-icons-round','arrow_forward');fwIc.style.fontSize='16px';fb.appendChild(fwIc); foot.appendChild(fb); panel.appendChild(foot);
