@@ -8146,8 +8146,10 @@
         var sMult = SEG_RATE_MULT[st] || 1.00;
         var rVarC = 0.93 + rnd(dbHash(hotelId + segId + 'Current' + di)) * 0.14;
         var base  = Math.round(h.base * sMult * wknd * rVarC);          /* = Current row */
+        var rVarR = 0.93 + rnd(dbHash(hotelId + segId + 'Recommended' + di)) * 0.14;
+        var rateR = h.base * sMult * wknd * rVarR;                       /* base for rec calc */
         var recMult = 0.97 + rnd(dbHash(hotelId + segId + 'rec' + di)) * 0.06;
-        var rec   = Math.round(base * recMult);                          /* = Recommended row */
+        var rec   = Math.round(rateR * recMult);                         /* = Recommended row */
         var absCh = rec - base;
         var pct   = Math.round(absCh / base * 100);
 
