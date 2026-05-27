@@ -8244,12 +8244,12 @@
         var nlb=el('p','re-nl-body'); nlb.innerHTML=data.nlSummary; nl.appendChild(nlb);
         panel.appendChild(nl); panel.appendChild(reDiv());
 
-        /* Pricing breakdown (collapsible) */
-        var bdOpen={v:true};
+        /* ── Section 1: Pricing breakdown (collapsible, starts closed) ── */
+        var bdOpen={v:false};
         var bdTog=el('button','re-toggle'); bdTog.appendChild(el('span','re-toggle-lbl','See detailed pricing breakdown'));
-        var bdIc=el('span','mi material-icons-round','keyboard_arrow_up'); bdTog.appendChild(bdIc);
+        var bdIc=el('span','mi material-icons-round','keyboard_arrow_down'); bdTog.appendChild(bdIc);
         panel.appendChild(bdTog); panel.appendChild(reDiv());
-        var bdBody=el('div','re-breakdown');
+        var bdBody=el('div','re-breakdown'); bdBody.style.display='none';
 
         /* Legend */
         var leg=el('div','re-legend');
@@ -8291,12 +8291,15 @@
         var rs2=el('div','re-bar-seg');rs2.style.cssText='left:0;width:'+TW+'px;background:#354549';rt.appendChild(rs2);rw.appendChild(rt);rr.appendChild(rw);
         rr.appendChild(el('span','re-val',fA(data.rec))); bdBody.appendChild(rr); bdBody.appendChild(reDiv());
 
-        /* Driver detail (collapsible) */
-        var detOpen={v:true};
+        bdTog.addEventListener('click',function(e){e.stopPropagation();bdOpen.v=!bdOpen.v;bdBody.style.display=bdOpen.v?'':'none';bdIc.textContent=bdOpen.v?'keyboard_arrow_up':'keyboard_arrow_down';});
+        panel.appendChild(bdBody); panel.appendChild(reDiv());
+
+        /* ── Section 2: Driver detail (collapsible, starts closed) ── */
+        var detOpen={v:false};
         var detTog=el('button','re-det-toggle'); detTog.appendChild(el('span','re-det-toggle-lbl','Show driver detail'));
-        var detIc=el('span','mi material-icons-round','keyboard_arrow_up'); detTog.appendChild(detIc);
-        bdBody.appendChild(detTog);
-        var detBody=el('div','re-driver-detail');
+        var detIc=el('span','mi material-icons-round','keyboard_arrow_down'); detTog.appendChild(detIc);
+        panel.appendChild(detTog); panel.appendChild(reDiv());
+        var detBody=el('div','re-driver-detail'); detBody.style.display='none';
 
         /* Demand detail */
         var dd=el('div','re-det-item');
@@ -8307,7 +8310,7 @@
         /* Comp set detail */
         var cd=el('div','re-det-item');
         cd.appendChild(el('p','re-det-title'+(data.compAmt>=0?' pos':' neg'),'Comp set pressure'));
-        cd.appendChild(el('p','re-det-body',data.comps.filter(function(x){return x.rate>data.base;}).length+' of 5 competitors priced above current rate. Comp set avg '+c+data.avgComp+'.'));
+        cd.appendChild(el('p','re-det-body',data.comps.filter(function(x){return x.rate>data.base;}).length+' of '+data.comps.length+' competitors priced above current rate. Comp set avg '+c+data.avgComp+'.'));
         var cList=el('div'); cList.style.paddingTop='4px';
         data.comps.forEach(function(comp){
           var cr=el('div','re-comp-row'); cr.appendChild(el('span','re-comp-name',comp.name)); cr.appendChild(el('span','re-comp-rate',c+comp.rate));
@@ -8333,12 +8336,9 @@
 
         /* Data footer */
         var df=el('div','re-data-foot'); var iIc=el('span','mi material-icons-round','info'); iIc.style.cssText='font-size:12px;color:#4f5b60'; df.appendChild(iIc); df.appendChild(el('span','re-data-foot-txt','Comp set data via Lighthouse · Updated today')); detBody.appendChild(df);
-        bdBody.appendChild(detBody);
 
-        /* Collapsible toggles */
         detTog.addEventListener('click',function(e){e.stopPropagation();detOpen.v=!detOpen.v;detBody.style.display=detOpen.v?'':'none';detIc.textContent=detOpen.v?'keyboard_arrow_up':'keyboard_arrow_down';});
-        bdTog.addEventListener('click',function(e){e.stopPropagation();bdOpen.v=!bdOpen.v;bdBody.style.display=bdOpen.v?'':'none';bdIc.textContent=bdOpen.v?'keyboard_arrow_up':'keyboard_arrow_down';});
-        panel.appendChild(bdBody); panel.appendChild(reDiv());
+        panel.appendChild(detBody); panel.appendChild(reDiv());
 
         /* Active Constraints */
         var cons=el('div','re-cons'); cons.appendChild(el('div','re-cons-title','Active Constraints'));
