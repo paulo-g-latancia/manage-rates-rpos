@@ -471,7 +471,7 @@
     }
 
     .mc-charts-panel {
-      width: 380px;
+      width: 420px;
       min-width: 180px;
       flex-shrink: 0;
       display: flex;
@@ -620,8 +620,8 @@
       background: white;
       font-weight: 400;
       text-align: center;
-      min-width: 70px;
-      width: 70px;
+      min-width: 56px;
+      width: 56px;
       border-bottom: 1px solid #e0e0e0;
       cursor: pointer;
     }
@@ -755,8 +755,8 @@
       border: none;
       background: transparent;
       outline: none;
-      text-align: left;
-      padding: 0 8px 0 2px;
+      text-align: right;
+      padding: 0 4px 0 0;
       font-family: 'Lato', sans-serif;
       font-size: 14px;
       color: #1c1c1c;
@@ -764,11 +764,11 @@
 
     /* Data cells */
     .rt-table .rt-cell {
-      width: 70px;
-      min-width: 70px;
+      width: 56px;
+      min-width: 56px;
       text-align: right;
-      padding-right: 12px;
-      padding-left: 6px;
+      padding-right: 8px;
+      padding-left: 4px;
     }
 
     /* Hover states */
@@ -795,7 +795,8 @@
     .rt-rec-explain {
       display: inline-flex;
       align-items: center;
-      margin-left: 4px;
+      margin-right: 3px;
+      margin-left: 0;
       position: relative;
       color: #248b86;
       cursor: default;
@@ -808,7 +809,7 @@
       opacity: 1;
       pointer-events: auto;
     }
-    .rt-rec-explain .mi { font-size: 18px; line-height: 1; }
+    .rt-rec-explain .mi { font-size: 13px; line-height: 1; }
     .rt-rec-tooltip {
       position: absolute;
       bottom: calc(100% + 6px);
@@ -8079,7 +8080,7 @@
         /* COLGROUP — locks column widths regardless of row collapse state */
         var cg = document.createElement('colgroup');
         var lcCol = document.createElement('col'); lcCol.style.width = '240px'; cg.appendChild(lcCol);
-        dates.forEach(function() { var c = document.createElement('col'); c.style.width = '70px'; cg.appendChild(c); });
+        dates.forEach(function() { var c = document.createElement('col'); c.style.width = '56px'; cg.appendChild(c); });
         tbl.appendChild(cg);
 
         /* THEAD */
@@ -8181,7 +8182,7 @@
               td.className = 'rt-cell';
 
               if (isOverride) {
-                td.style.padding = '8px 4px 8px 24px';
+                td.style.padding = '8px 2px 8px 20px';
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = 'override'; radioEl.className = 'rt-radio';
@@ -8251,7 +8252,7 @@
                 }
 
               } else if (isCurrent || isRecommended) {
-                td.style.padding = '8px 4px 8px 24px';
+                td.style.padding = '8px 2px 8px 20px';
                 var radioKey = row.lb.toLowerCase();
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
@@ -8268,9 +8269,6 @@
                   if (isRecommended && !wasRec) { selectedCol = di; startLoading(di, 'recommended'); } else updatePublishBtn();
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
-                if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
-                  td.innerHTML = '<span class="rt-cur">' + val[0] + '</span>' + val.slice(1);
-                } else { td.textContent = val; }
                 if (isRecommended) {
                   var explainBtn = document.createElement('span');
                   explainBtn.className = 'rt-rec-explain';
@@ -8283,11 +8281,16 @@
                   explainBtn.appendChild(explainIcon);
                   explainBtn.appendChild(tooltip);
                   td.appendChild(explainBtn);
-                  if (isLoading && loadingCol === di && loadingSource === 'recommended') {
-                    var spinner = document.createElement('span');
-                    spinner.className = 'rt-spinner';
-                    td.appendChild(spinner);
-                  }
+                }
+                if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
+                  var curSpan = document.createElement('span'); curSpan.className = 'rt-cur'; curSpan.textContent = val[0];
+                  td.appendChild(curSpan);
+                  td.appendChild(document.createTextNode(val.slice(1)));
+                } else { td.appendChild(document.createTextNode(val || '')); }
+                if (isRecommended && isLoading && loadingCol === di && loadingSource === 'recommended') {
+                  var spinner = document.createElement('span');
+                  spinner.className = 'rt-spinner';
+                  td.appendChild(spinner);
                 }
                 td.appendChild(radioEl);
 
