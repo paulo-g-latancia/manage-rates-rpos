@@ -8133,24 +8133,45 @@
 
       function pad2(n){ return n<10?'0'+n:String(n); }
 
-      function genExplainerData(hotelId, di, d) {
+      function genExplainerData(hotelId, segId, di, d) {
         var h = HOTELS_DB[hotelId]; if (!h) return null;
         var c = h.cur;
         var H = function(s){ return dbHash(hotelId+String(di)+s); };
         var R = function(s){ return rnd(H(s)); };
         var dow = d.getDay(), isWe = dow===0||dow===5||dow===6;
-        var base = Math.round(h.base*(isWe?1.18:1.0)*(0.88+R('b')*0.24));
-        var demAmt  = Math.round(base*(0.08+R('d')*0.28+(isWe?0.08:0)));
-        var compAmt = Math.round(base*(-0.06+R('c')*0.22));
-        var invAmt  = Math.round(base*(0.04+R('i')*0.16));
-        var dbaAmt  = Math.round(base*(-0.025+R('a')*0.015));
-        var rec     = base+demAmt+compAmt+invAmt+dbaAmt;
-        var pct     = Math.round((rec-base)/base*100);
-        var cNames  = ['Hotel Lux','Grand Park','City Suites','The Avenue','Metro Inn'];
-        var comps   = cNames.map(function(n,i){ return {name:n, rate:Math.round(rec*(0.76+R('cr'+i)*0.48))}; })
-                            .sort(function(a,b){return b.rate-a.rate;});
-        var avgComp = Math.round(comps.reduce(function(s,x){return s+x.rate;},0)/5);
+        var wknd = isWe ? 1.18 : 1.0;
+
+        /* === Exact same formulas as dbVal so panel matches table === */
+        var st    = segId.indexOf('-') < 0 ? segId : segId.slice(segId.indexOf('-') + 1);
+        var sMult = SEG_RATE_MULT[st] || 1.00;
+        var rVarC = 0.93 + rnd(dbHash(hotelId + segId + 'Current' + di)) * 0.14;
+        var base  = Math.round(h.base * sMult * wknd * rVarC);          /* = Current row */
+        var recMult = 0.97 + rnd(dbHash(hotelId + segId + 'rec' + di)) * 0.06;
+        var rec   = Math.round(base * recMult);                          /* = Recommended row */
+        var absCh = rec - base;
+        var pct   = Math.round(absCh / base * 100);
+
+        /* Comp set — same seeds as dbVal cases */
+        var cBase = h.base * wknd;
+        var comps = [
+          { name:'Hotel Mirasol',             rate: Math.round(cBase*(0.90+rnd(dbHash(hotelId+'rs1'+di))*0.14)) },
+          { name:'Maritim proArte Barcelona',  rate: Math.round(cBase*(0.88+rnd(dbHash(hotelId+'rs2'+di))*0.18)) },
+          { name:'Kempinski Hotel Barcelona',  rate: Math.round(cBase*(1.06+rnd(dbHash(hotelId+'rs3'+di))*0.20)) }
+        ].sort(function(a,b){return b.rate-a.rate;});
+        var avgComp = Math.round(comps.reduce(function(s,x){return s+x.rate;},0)/comps.length);
         var nHigher = comps.filter(function(x){return x.rate>base;}).length;
+
+        /* Waterfall components — random fractions normalised to sum exactly to absCh */
+        var rawDem  = 0.08 + R('d') * 0.28 + (isWe ? 0.08 : 0);
+        var rawComp = -0.06 + R('c') * 0.22;
+        var rawInv  = 0.04 + R('i') * 0.16;
+        var rawDba  = -0.025 + R('a') * 0.015;
+        var rawTot  = rawDem + rawComp + rawInv + rawDba;
+        var demAmt  = rawTot !== 0 ? Math.round(rawDem  / rawTot * absCh) : 0;
+        var compAmt = rawTot !== 0 ? Math.round(rawComp / rawTot * absCh) : 0;
+        var invAmt  = rawTot !== 0 ? Math.round(rawInv  / rawTot * absCh) : 0;
+        var dbaAmt  = absCh - demAmt - compAmt - invAmt; /* absorbs rounding so sum is exact */
+
         var grpRms  = Math.round(h.rooms*(0.09+R('g')*0.16));
         var sellable= h.rooms-grpRms;
         var forecast= Math.round(sellable*(0.82+R('f')*0.14));
@@ -8159,13 +8180,12 @@
         var dbaLbl  = di===0?'Day of arrival':di+' days to arrival';
         var minB    = Math.round(h.base*0.5/5)*5;
         var maxB    = Math.round(h.base*2.8/5)*5;
-        var absCh   = rec-base;
         var parts   = [];
-        if(demAmt>0)  parts.push('strong transient pickup (+'+Math.round(transRem*0.4)+' room nights)');
-        if(grpRms>0)  parts.push('firm group base (+'+grpRms+' rooms, ~2% wash expected)');
+        if(demAmt>0)   parts.push('strong transient pickup (+'+Math.round(transRem*0.4)+' room nights)');
+        if(grpRms>0)   parts.push('firm group base (+'+grpRms+' rooms, ~2% wash expected)');
         if(transRem>0) parts.push('limited transient availability ('+transRem+' room nights remaining)');
         var nlSummary = parts.join(', ')+' → <strong>'+(absCh>=0?'+':'−')+c+Math.abs(absCh)+
-          ' rate '+(absCh>=0?'increase':'decrease')+'</strong>. Comp set avg '+c+avgComp+', '+nHigher+' of 5 higher.';
+          ' rate '+(absCh>=0?'increase':'decrease')+'</strong>. Comp set avg '+c+avgComp+', '+nHigher+' of '+comps.length+' higher.';
         var evtPool = ['Pickup signal detected','OTA demand acceleration','Comp set drop detected',
           'Group block confirmed','Comp set shift upward','Pace softened temporarily',
           'Inventory tightening','Booking acceleration','Comp rate increase','Demand forecast revised'];
@@ -8599,7 +8619,7 @@
                   (function(btn, colIdx, colDate) {
                     btn.addEventListener('click', function(e) {
                       e.stopPropagation();
-                      var exData = genExplainerData(hotelId, colIdx, colDate);
+                      var exData = genExplainerData(hotelId, selId, colIdx, colDate);
                       if (exData) showExplainerPanel(btn, exData, colDate);
                     });
                   }(explainBtn, di, d));
