@@ -471,7 +471,7 @@
     }
 
     .mc-charts-panel {
-      width: 320px;
+      width: 380px;
       min-width: 180px;
       flex-shrink: 0;
       display: flex;
@@ -620,8 +620,8 @@
       background: white;
       font-weight: 400;
       text-align: center;
-      min-width: 88px;
-      width: 88px;
+      min-width: 70px;
+      width: 70px;
       border-bottom: 1px solid #e0e0e0;
       cursor: pointer;
     }
@@ -764,11 +764,11 @@
 
     /* Data cells */
     .rt-table .rt-cell {
-      width: 88px;
-      min-width: 88px;
-      text-align: left;
-      padding-right: 16px;
-      padding-left: 8px;
+      width: 70px;
+      min-width: 70px;
+      text-align: right;
+      padding-right: 12px;
+      padding-left: 6px;
     }
 
     /* Hover states */
@@ -8079,7 +8079,7 @@
         /* COLGROUP — locks column widths regardless of row collapse state */
         var cg = document.createElement('colgroup');
         var lcCol = document.createElement('col'); lcCol.style.width = '240px'; cg.appendChild(lcCol);
-        dates.forEach(function() { var c = document.createElement('col'); c.style.width = '88px'; cg.appendChild(c); });
+        dates.forEach(function() { var c = document.createElement('col'); c.style.width = '70px'; cg.appendChild(c); });
         tbl.appendChild(cg);
 
         /* THEAD */
@@ -8181,7 +8181,7 @@
               td.className = 'rt-cell';
 
               if (isOverride) {
-                td.style.padding = '8px 6px 8px 28px';
+                td.style.padding = '8px 4px 8px 24px';
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
                 radioEl.value = 'override'; radioEl.className = 'rt-radio';
@@ -8251,7 +8251,7 @@
                 }
 
               } else if (isCurrent || isRecommended) {
-                td.style.padding = '8px 6px 8px 28px';
+                td.style.padding = '8px 4px 8px 24px';
                 var radioKey = row.lb.toLowerCase();
                 var radioEl = document.createElement('input');
                 radioEl.type = 'radio'; radioEl.name = 'rt-rate-' + di;
