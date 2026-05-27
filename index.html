@@ -8491,16 +8491,22 @@
       function prepCanvas(id) {
         var cv = document.getElementById(id);
         if (!cv) return null;
-        var dpr  = window.devicePixelRatio || 1;
-        var rect = cv.getBoundingClientRect();
-        var W    = Math.max(60, Math.floor(rect.width));
-        var H    = Math.max(60, Math.floor(rect.height));
-        if (cv.width !== W * dpr || cv.height !== H * dpr) {
-          cv.width  = W * dpr;
-          cv.height = H * dpr;
-          cv.style.width  = W + 'px';
-          cv.style.height = H + 'px';
-        }
+        var dpr = window.devicePixelRatio || 1;
+        /* Read available space from the parent .mc-chart-box so the canvas
+           always fills the current flex-allocated area, even after a resize. */
+        var box = cv.parentElement;
+        if (!box) return null;
+        var cs   = getComputedStyle(box);
+        var padW = (parseFloat(cs.paddingLeft)  || 0) + (parseFloat(cs.paddingRight)  || 0);
+        var padH = (parseFloat(cs.paddingTop)   || 0) + (parseFloat(cs.paddingBottom) || 0);
+        var titleRow = box.querySelector('.mc-chart-title-row');
+        var titleH   = titleRow ? titleRow.offsetHeight + (parseFloat(getComputedStyle(titleRow).marginBottom) || 0) : 0;
+        var W = Math.max(60, Math.round(box.clientWidth  - padW));
+        var H = Math.max(40, Math.round(box.clientHeight - padH - titleH));
+        cv.width  = W * dpr;
+        cv.height = H * dpr;
+        cv.style.width  = W + 'px';
+        cv.style.height = H + 'px';
         var ctx = cv.getContext('2d');
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         return { ctx: ctx, W: W, H: H };
@@ -8832,11 +8838,17 @@
         render(0, selId);
       }, 120);
 
-      /* re-render on panel resize */
+      /* Re-render whenever the charts panel changes size.
+         requestAnimationFrame ensures layout is fully settled before we read
+         the box dimensions in prepCanvas. */
       if (window.ResizeObserver) {
         var panel = document.getElementById('mc-charts-panel');
         if (panel) {
-          new ResizeObserver(function () { render(_di, _selId); }).observe(panel);
+          var _rafId = null;
+          new ResizeObserver(function () {
+            cancelAnimationFrame(_rafId);
+            _rafId = requestAnimationFrame(function () { render(_di, _selId); });
+          }).observe(panel);
         }
       }
     })();
