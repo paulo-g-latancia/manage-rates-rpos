@@ -800,36 +800,120 @@
       margin-left: 0;
       position: relative;
       color: #248b86;
-      cursor: default;
+      cursor: pointer;
       opacity: 1;
       pointer-events: auto;
       vertical-align: middle;
       line-height: 1;
     }
     .rt-rec-explain .mi { font-size: 18px; line-height: 1; }
-    .rt-rec-tooltip {
+    .rt-rec-explain::before {
+      content: 'Rate Explainer';
       position: absolute;
-      bottom: calc(100% + 6px);
+      bottom: calc(100% + 5px);
       left: 50%;
       transform: translateX(-50%);
       background: #1c1c1c;
       color: #fff;
-      font-size: 12px;
-      line-height: 1.5;
-      border-radius: 4px;
-      padding: 8px 10px;
-      width: 200px;
-      z-index: 300;
-      white-space: normal;
+      font-size: 11px;
+      font-family: 'Lato', sans-serif;
+      border-radius: 3px;
+      padding: 3px 7px;
+      white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.05s 0.12s;
+      transition: opacity 0.12s;
+      z-index: 100;
     }
-    .rt-rec-tooltip strong { display: block; margin-bottom: 3px; font-size: 12px; }
-    .rt-rec-explain:hover .rt-rec-tooltip {
-      opacity: 1;
-      transition: opacity 0.05s 0s;
+    .rt-rec-explain:hover::before { opacity: 1; }
+
+    /* ─── RATE EXPLAINER PANEL ───────────────────────────── */
+    .re-panel {
+      position: fixed; z-index: 2000; width: 280px;
+      background: white; border: 1px solid #dde1e2; border-radius: 5px;
+      box-shadow: 0 2px 2px rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.12),0 1px 5px rgba(0,0,0,.2);
+      font-family: 'Lato',sans-serif; font-size: 11px;
+      max-height: 82vh; overflow-y: auto; overflow-x: hidden;
     }
+    .re-hdr { display:flex; align-items:center; justify-content:space-between; padding:6px 8px; }
+    .re-hdr-label { font-size:12px; font-weight:700; color:#006461; letter-spacing:.4px; text-transform:uppercase; }
+    .re-hdr-date { font-size:11px; color:#4f5b60; }
+    .re-div { height:1px; background:#dde1e2; flex-shrink:0; }
+    .re-rate-row { display:flex; align-items:center; gap:6px; padding:6px 8px; }
+    .re-cur-col { display:flex; flex-direction:column; gap:2px; padding-top:4px; flex-shrink:0; }
+    .re-cur-lbl { font-size:9px; color:#4f5b60; letter-spacing:.6px; }
+    .re-cur-val { font-size:14px; color:#4f5b60; }
+    .re-arrow-sym { font-size:12px; color:#4f5b60; flex-shrink:0; }
+    .re-rec-chip { display:flex; flex-direction:column; gap:1px; background:#e8f5e9; border-radius:4px; padding:4px 6px; color:#004948; flex-shrink:0; }
+    .re-rec-lbl { font-size:9px; letter-spacing:.6px; }
+    .re-rec-val { font-size:20px; font-weight:700; white-space:nowrap; }
+    .re-change-col { display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
+    .re-pct-badge { display:inline-flex; align-items:center; gap:2px; background:#e8f5e9; border-radius:999px; padding:1px 5px; font-size:11px; color:#28592c; }
+    .re-pct-badge.neg { background:#ffebee; color:#b71c1c; }
+    .re-pct-badge .mi { font-size:11px; }
+    .re-abs { font-size:14px; font-weight:700; color:#388c3f; white-space:nowrap; }
+    .re-abs.neg { color:#d32f2f; }
+    .re-nl { padding:8px 8px 6px; }
+    .re-nl-title { font-size:11px; font-weight:700; color:#1c1c1c; margin-bottom:4px; }
+    .re-nl-body { font-size:10px; color:#4f5b60; line-height:16px; letter-spacing:-.2px; }
+    .re-toggle { display:flex; align-items:center; gap:4px; padding:8px; cursor:pointer; background:white; border:none; width:100%; font-family:'Lato',sans-serif; text-align:left; }
+    .re-toggle:hover { background:#f5f5f5; }
+    .re-toggle-lbl { flex:1; font-size:11px; color:#006461; }
+    .re-toggle .mi { font-size:16px; color:#006461; }
+    .re-breakdown { padding:6px 8px 8px; display:flex; flex-direction:column; gap:5px; }
+    .re-legend { display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:2px; }
+    .re-legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:#4f5b60; }
+    .re-legend-dot { width:6px; height:6px; border-radius:1px; flex-shrink:0; }
+    .re-bar-row { display:flex; align-items:center; gap:4px; }
+    .re-bar-icon { font-size:12px; width:14px; flex-shrink:0; line-height:1; }
+    .re-bar-lbl { flex:1; font-size:11px; color:#1c1c1c; min-width:0; }
+    .re-bar-lbl.bld { font-weight:700; }
+    .re-bar-wrap { padding:2px 0; flex-shrink:0; }
+    .re-bar-track { width:78px; height:8px; background:#f5f5f5; border-radius:2px; overflow:hidden; position:relative; }
+    .re-bar-seg { position:absolute; top:0; height:8px; }
+    .re-val { width:52px; text-align:right; font-size:11px; font-weight:700; color:#1c1c1c; flex-shrink:0; }
+    .re-val.pos { color:#388c3f; }
+    .re-val.neg { color:#d32f2f; }
+    .re-det-toggle { display:flex; align-items:center; gap:4px; padding:6px 0; cursor:pointer; border:none; background:transparent; width:100%; font-family:'Lato',sans-serif; text-align:left; }
+    .re-det-toggle:hover { opacity:.75; }
+    .re-det-toggle-lbl { flex:1; font-size:11px; color:#006461; }
+    .re-det-toggle .mi { font-size:16px; color:#006461; }
+    .re-driver-detail { background:#f5f5f5; border-radius:4px; display:flex; flex-direction:column; padding:6px 0 4px; }
+    .re-det-item { display:flex; flex-direction:column; gap:3px; padding:0 8px 8px; }
+    .re-det-title { font-size:10px; font-weight:700; white-space:nowrap; }
+    .re-det-title.pos { color:#388c3f; }
+    .re-det-title.neg { color:#d32f2f; }
+    .re-det-body { font-size:10px; color:#4f5b60; line-height:14px; }
+    .re-comp-row { display:flex; align-items:center; gap:4px; font-size:10px; margin-top:2px; }
+    .re-comp-name { flex:1; color:#1c1c1c; }
+    .re-comp-rate { font-weight:700; color:#1c1c1c; flex-shrink:0; }
+    .re-comp-dir { font-size:12px; width:14px; flex-shrink:0; line-height:1; }
+    .re-data-foot { display:flex; align-items:center; gap:4px; padding:2px 8px 0; }
+    .re-data-foot-txt { font-size:10px; color:#4f5b60; font-style:italic; }
+    .re-cons { padding:8px; }
+    .re-cons-title { font-size:11px; font-weight:700; color:#1c1c1c; letter-spacing:.6px; margin-bottom:5px; }
+    .re-con-row { display:flex; align-items:baseline; gap:4px; font-size:10px; color:#4f5b60; margin-bottom:2px; }
+    .re-con-lbl { flex:1; }
+    .re-con-val { flex-shrink:0; white-space:nowrap; text-align:right; }
+    .re-hist { padding:8px; }
+    .re-hist-title { font-size:11px; font-weight:700; color:#1c1c1c; letter-spacing:.5px; margin-bottom:3px; }
+    .re-hist-sub { font-size:10px; color:#4f5b60; margin-bottom:5px; }
+    .re-hist-row { display:flex; align-items:flex-start; gap:4px; margin-bottom:3px; }
+    .re-hist-row.cur .re-hist-time,
+    .re-hist-row.cur .re-hist-evt,
+    .re-hist-row.cur .re-hist-rate { font-weight:700; }
+    .re-hist-ic { font-size:12px; color:#9fa8ad; flex-shrink:0; line-height:1.2; }
+    .re-hist-ic.cur { color:#1c1c1c; }
+    .re-hist-time { font-size:10px; color:#4f5b60; width:60px; flex-shrink:0; }
+    .re-hist-evt { flex:1; font-size:11px; color:#1c1c1c; min-width:0; }
+    .re-hist-delta { font-size:11px; width:44px; text-align:right; flex-shrink:0; }
+    .re-hist-delta.pos { color:#388c3f; }
+    .re-hist-delta.neg { color:#d32f2f; }
+    .re-hist-rate { font-size:11px; width:40px; text-align:right; flex-shrink:0; color:#1c1c1c; }
+    .re-foot { padding:8px 8px 12px; }
+    .re-foot-btn { display:flex; align-items:center; justify-content:center; gap:4px; background:#d7f7ed; height:32px; border-radius:4px; font-size:12px; color:#006461; border:none; width:100%; font-family:'Lato',sans-serif; cursor:pointer; }
+    .re-foot-btn:hover { background:#b8f0e0; }
+    .re-foot-btn .mi { font-size:16px; }
     .rt-radio {
       position: absolute;
       left: 6px;
@@ -8044,6 +8128,245 @@
         lbl.textContent = n > 0 ? 'Review and Publish (' + n + ')' : 'Review and Publish';
       }
 
+      /* ── Rate Explainer: data + panel ────────────────────── */
+      var _rePanel = null, _reIconEl = null;
+
+      function pad2(n){ return n<10?'0'+n:String(n); }
+
+      function genExplainerData(hotelId, di, d) {
+        var h = HOTELS_DB[hotelId]; if (!h) return null;
+        var c = h.cur;
+        var H = function(s){ return dbHash(hotelId+String(di)+s); };
+        var R = function(s){ return rnd(H(s)); };
+        var dow = d.getDay(), isWe = dow===0||dow===5||dow===6;
+        var base = Math.round(h.base*(isWe?1.18:1.0)*(0.88+R('b')*0.24));
+        var demAmt  = Math.round(base*(0.08+R('d')*0.28+(isWe?0.08:0)));
+        var compAmt = Math.round(base*(-0.06+R('c')*0.22));
+        var invAmt  = Math.round(base*(0.04+R('i')*0.16));
+        var dbaAmt  = Math.round(base*(-0.025+R('a')*0.015));
+        var rec     = base+demAmt+compAmt+invAmt+dbaAmt;
+        var pct     = Math.round((rec-base)/base*100);
+        var cNames  = ['Hotel Lux','Grand Park','City Suites','The Avenue','Metro Inn'];
+        var comps   = cNames.map(function(n,i){ return {name:n, rate:Math.round(rec*(0.76+R('cr'+i)*0.48))}; })
+                            .sort(function(a,b){return b.rate-a.rate;});
+        var avgComp = Math.round(comps.reduce(function(s,x){return s+x.rate;},0)/5);
+        var nHigher = comps.filter(function(x){return x.rate>base;}).length;
+        var grpRms  = Math.round(h.rooms*(0.09+R('g')*0.16));
+        var sellable= h.rooms-grpRms;
+        var forecast= Math.round(sellable*(0.82+R('f')*0.14));
+        var transRem= Math.round(sellable*(0.06+R('t')*0.18));
+        var demIdx  = (1.10+R('x')*0.48).toFixed(2);
+        var dbaLbl  = di===0?'Day of arrival':di+' days to arrival';
+        var minB    = Math.round(h.base*0.5/5)*5;
+        var maxB    = Math.round(h.base*2.8/5)*5;
+        var absCh   = rec-base;
+        var parts   = [];
+        if(demAmt>0)  parts.push('strong transient pickup (+'+Math.round(transRem*0.4)+' room nights)');
+        if(grpRms>0)  parts.push('firm group base (+'+grpRms+' rooms, ~2% wash expected)');
+        if(transRem>0) parts.push('limited transient availability ('+transRem+' room nights remaining)');
+        var nlSummary = parts.join(', ')+' → <strong>'+(absCh>=0?'+':'−')+c+Math.abs(absCh)+
+          ' rate '+(absCh>=0?'increase':'decrease')+'</strong>. Comp set avg '+c+avgComp+', '+nHigher+' of 5 higher.';
+        var evtPool = ['Pickup signal detected','OTA demand acceleration','Comp set drop detected',
+          'Group block confirmed','Comp set shift upward','Pace softened temporarily',
+          'Inventory tightening','Booking acceleration','Comp rate increase','Demand forecast revised'];
+        var nH = 3+Math.floor(R('hn')*5);
+        var hist = [], hRate = Math.round(base*(0.85+R('h0')*0.3));
+        hist.push({lbl:'−7d · '+pad2(6+Math.floor(R('ht0')*12))+':'+(R('hm0')>.5?'30':'00'),
+          evt:'Recommendation 7 days ago', delta:null, rate:hRate, isCur:false});
+        for(var i=0;i<nH;i++){
+          var db = Math.round(7*(1-(i+1)/(nH+1)));
+          var dlbl = db===0?'Today':db===1?'Yesterday':'−'+db+'d';
+          var dlt  = Math.round(-18+R('hd'+i)*48);
+          hRate   += dlt;
+          hist.push({lbl:dlbl+' · '+pad2(6+Math.floor(R('hth'+i)*15))+':'+(R('htm'+i)>.5?'30':'00'),
+            evt:evtPool[Math.floor(R('he'+i)*evtPool.length)], delta:dlt, rate:hRate, isCur:false});
+        }
+        hist.push({lbl:'Today · '+pad2(18+Math.floor(R('htf')*5))+(R('hmf')>.5?':35':':05'),
+          evt:'Current recommendation', delta:rec-hRate, rate:rec, isCur:true});
+        return { cur:c, base:base, demAmt:demAmt, compAmt:compAmt, invAmt:invAmt, dbaAmt:dbaAmt,
+          rec:rec, pct:pct, absChange:absCh, comps:comps, avgComp:avgComp,
+          constraints:[{lbl:'Min/Max bounds',val:c+minB+' – '+c+maxB},{lbl:'Pricing rule: Discount',val:'≥ Retail −25%'},{lbl:'MinLOS: 2 nights',val:'demand trigger'}],
+          hist:hist, histStart:hist[0].rate, nUpdates:nH+2,
+          grpRms:grpRms, sellable:sellable, forecast:forecast, transRem:transRem, demIdx:demIdx, dbaLbl:dbaLbl, nlSummary:nlSummary };
+      }
+
+      function reDiv(){ var d=document.createElement('div'); d.className='re-div'; return d; }
+
+      function buildExplainerPanel(data, d) {
+        var c=data.cur;
+        var fA=function(n){return c+Math.abs(Math.round(n)).toLocaleString();};
+        var fS=function(n){var r=Math.round(n);return (r>=0?'+':'−')+c+Math.abs(r);};
+        var el=function(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
+        var panel=el('div','re-panel');
+        panel.addEventListener('click',function(e){e.stopPropagation();});
+
+        /* Header */
+        var hdr=el('div','re-hdr');
+        hdr.appendChild(el('span','re-hdr-label','Recommended Rate'));
+        hdr.appendChild(el('span','re-hdr-date',d.toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric'})));
+        panel.appendChild(hdr); panel.appendChild(reDiv());
+
+        /* Rate summary */
+        var rs=el('div','re-rate-row');
+        var cCol=el('div','re-cur-col'); cCol.appendChild(el('div','re-cur-lbl','CURRENT')); cCol.appendChild(el('div','re-cur-val',fA(data.base)));
+        var chip=el('div','re-rec-chip'); chip.appendChild(el('div','re-rec-lbl','RECOMMENDED')); chip.appendChild(el('div','re-rec-val',fA(data.rec)));
+        var chCol=el('div','re-change-col');
+        var badge=el('div','re-pct-badge'+(data.absChange<0?' neg':''));
+        var bIc=el('span','mi material-icons-round'); bIc.style.fontSize='11px'; bIc.textContent=data.absChange>=0?'arrow_upward':'arrow_downward'; badge.appendChild(bIc); badge.appendChild(document.createTextNode((data.pct>=0?'+':'')+data.pct+'%'));
+        chCol.appendChild(badge); chCol.appendChild(el('div','re-abs'+(data.absChange<0?' neg':''),fS(data.absChange)));
+        rs.appendChild(cCol); rs.appendChild(el('span','re-arrow-sym','→')); rs.appendChild(chip); rs.appendChild(el('span','re-arrow-sym','=')); rs.appendChild(chCol);
+        panel.appendChild(rs); panel.appendChild(reDiv());
+
+        /* NL summary */
+        var nl=el('div','re-nl'); nl.appendChild(el('div','re-nl-title','Why this rate?'));
+        var nlb=el('p','re-nl-body'); nlb.innerHTML=data.nlSummary; nl.appendChild(nlb);
+        panel.appendChild(nl); panel.appendChild(reDiv());
+
+        /* Pricing breakdown (collapsible) */
+        var bdOpen={v:true};
+        var bdTog=el('button','re-toggle'); bdTog.appendChild(el('span','re-toggle-lbl','See detailed pricing breakdown'));
+        var bdIc=el('span','mi material-icons-round','keyboard_arrow_up'); bdTog.appendChild(bdIc);
+        panel.appendChild(bdTog); panel.appendChild(reDiv());
+        var bdBody=el('div','re-breakdown');
+
+        /* Legend */
+        var leg=el('div','re-legend');
+        [['#aeb4ba','Base'],['#388c3f','Increases'],['#d32f2f','Decreases'],['#354549','Total']].forEach(function(p){
+          var li=el('div','re-legend-item'); var dot=el('div','re-legend-dot'); dot.style.background=p[0]; li.appendChild(dot); li.appendChild(document.createTextNode(p[1])); leg.appendChild(li);
+        }); bdBody.appendChild(leg);
+
+        /* Waterfall */
+        var TW=78, acc=0, rRec=data.rec;
+        var wRows=[
+          {lbl:'Base rate',        amt:data.base,    kind:'base', ico:null},
+          {lbl:'Demand uplift',    amt:data.demAmt,  kind:data.demAmt>=0?'pos':'neg',  ico:data.demAmt>=0?'sentiment_satisfied':'sentiment_dissatisfied'},
+          {lbl:'Comp set pressure',amt:data.compAmt, kind:data.compAmt>=0?'pos':'neg', ico:data.compAmt>=0?'sentiment_satisfied':'sentiment_dissatisfied'},
+          {lbl:'Limited inventory',amt:data.invAmt,  kind:data.invAmt>=0?'pos':'neg',  ico:data.invAmt>=0?'sentiment_satisfied':'sentiment_dissatisfied'},
+          {lbl:'DBA adjustment',   amt:data.dbaAmt,  kind:data.dbaAmt>=0?'pos':'neg',  ico:data.dbaAmt>=0?'sentiment_satisfied':'sentiment_dissatisfied'}
+        ];
+        bdBody.appendChild(reDiv());
+        wRows.forEach(function(row,idx){
+          var br=el('div','re-bar-row');
+          if(row.ico){var ic=el('span','mi material-icons-round re-bar-icon',row.ico);ic.style.color=row.kind==='pos'?'#388c3f':'#d32f2f';br.appendChild(ic);}
+          else{var sp=el('span');sp.style.cssText='width:14px;flex-shrink:0;display:inline-block';br.appendChild(sp);}
+          br.appendChild(el('span','re-bar-lbl',row.lbl));
+          var wrap=el('div','re-bar-wrap'), track=el('div','re-bar-track');
+          var gW=Math.round(Math.min(Math.max(acc,0),Math.abs(rRec))/Math.abs(rRec)*TW);
+          var dW=Math.round(Math.abs(row.amt)/Math.abs(rRec)*TW);
+          if(row.kind==='base'){var s=el('div','re-bar-seg');s.style.cssText='left:0;width:'+Math.round(row.amt/Math.abs(rRec)*TW)+'px;background:#aeb4ba';track.appendChild(s);}
+          else{if(gW>0){var gs=el('div','re-bar-seg');gs.style.cssText='left:0;width:'+gW+'px;background:#aeb4ba';track.appendChild(gs);}if(dW>0){var ds=el('div','re-bar-seg');ds.style.cssText='left:'+gW+'px;width:'+dW+'px;background:'+(row.kind==='pos'?'#388c3f':'#d32f2f');track.appendChild(ds);}}
+          wrap.appendChild(track); br.appendChild(wrap);
+          var vEl=el('span','re-val'+(row.kind==='pos'?' pos':row.kind==='neg'?' neg':''));
+          vEl.textContent=row.kind==='base'?fA(row.amt):fS(row.amt); br.appendChild(vEl);
+          bdBody.appendChild(br); acc+=row.amt;
+          if(idx===0)bdBody.appendChild(reDiv());
+        });
+        bdBody.appendChild(reDiv());
+        /* Recommendation total */
+        var rr=el('div','re-bar-row'); var sp2=el('span');sp2.style.cssText='width:14px;flex-shrink:0;display:inline-block';rr.appendChild(sp2);
+        rr.appendChild(el('span','re-bar-lbl bld','Recommendation'));
+        var rw=el('div','re-bar-wrap'),rt=el('div','re-bar-track');
+        var rs2=el('div','re-bar-seg');rs2.style.cssText='left:0;width:'+TW+'px;background:#354549';rt.appendChild(rs2);rw.appendChild(rt);rr.appendChild(rw);
+        rr.appendChild(el('span','re-val',fA(data.rec))); bdBody.appendChild(rr); bdBody.appendChild(reDiv());
+
+        /* Driver detail (collapsible) */
+        var detOpen={v:true};
+        var detTog=el('button','re-det-toggle'); detTog.appendChild(el('span','re-det-toggle-lbl','Show driver detail'));
+        var detIc=el('span','mi material-icons-round','keyboard_arrow_up'); detTog.appendChild(detIc);
+        bdBody.appendChild(detTog);
+        var detBody=el('div','re-driver-detail');
+
+        /* Demand detail */
+        var dd=el('div','re-det-item');
+        dd.appendChild(el('p','re-det-title pos','Demand uplift'));
+        dd.appendChild(el('p','re-det-body','Forecast at '+data.forecast+' rn ('+Math.round(data.forecast/data.sellable*100)+'%). Group base: '+data.grpRms+' rn committed (~2% wash). Transient demand: '+(data.forecast-data.grpRms)+' rn, above seasonal norm (index '+data.demIdx+'\xd7).'));
+        dd.appendChild(reDiv()); detBody.appendChild(dd);
+
+        /* Comp set detail */
+        var cd=el('div','re-det-item');
+        cd.appendChild(el('p','re-det-title'+(data.compAmt>=0?' pos':' neg'),'Comp set pressure'));
+        cd.appendChild(el('p','re-det-body',data.comps.filter(function(x){return x.rate>data.base;}).length+' of 5 competitors priced above current rate. Comp set avg '+c+data.avgComp+'.'));
+        var cList=el('div'); cList.style.paddingTop='4px';
+        data.comps.forEach(function(comp){
+          var cr=el('div','re-comp-row'); cr.appendChild(el('span','re-comp-name',comp.name)); cr.appendChild(el('span','re-comp-rate',c+comp.rate));
+          var dir=el('span','mi material-icons-round re-comp-dir'); dir.style.fontSize='12px';
+          if(comp.rate>data.rec){dir.textContent='arrow_upward';dir.style.color='#388c3f';}
+          else if(comp.rate<data.rec*0.88){dir.textContent='arrow_downward';dir.style.color='#d32f2f';}
+          else{dir.textContent='≈';dir.style.color='#4f5b60';}
+          cr.appendChild(dir); cList.appendChild(cr);
+        });
+        cd.appendChild(cList); cd.appendChild(reDiv()); detBody.appendChild(cd);
+
+        /* Inventory detail */
+        var id2=el('div','re-det-item');
+        id2.appendChild(el('p','re-det-title'+(data.invAmt>=0?' pos':' neg'),'Limited inventory'));
+        id2.appendChild(el('p','re-det-body',data.transRem+' transient rn remaining of '+data.sellable+' sellable ('+data.grpRms+' held by group). Scarcity premium applied.'));
+        id2.appendChild(reDiv()); detBody.appendChild(id2);
+
+        /* DBA detail */
+        var da=el('div','re-det-item');
+        da.appendChild(el('p','re-det-title'+(data.dbaAmt>=0?' pos':' neg'),'DBA adjustment'));
+        da.appendChild(el('p','re-det-body',data.dbaLbl+' — slight '+(data.dbaAmt<0?'tempering applied to avoid rate shock.':'uplift applied for last-minute demand.')));
+        detBody.appendChild(da);
+
+        /* Data footer */
+        var df=el('div','re-data-foot'); var iIc=el('span','mi material-icons-round','info'); iIc.style.cssText='font-size:12px;color:#4f5b60'; df.appendChild(iIc); df.appendChild(el('span','re-data-foot-txt','Comp set data via Lighthouse · Updated today')); detBody.appendChild(df);
+        bdBody.appendChild(detBody);
+
+        /* Collapsible toggles */
+        detTog.addEventListener('click',function(e){e.stopPropagation();detOpen.v=!detOpen.v;detBody.style.display=detOpen.v?'':'none';detIc.textContent=detOpen.v?'keyboard_arrow_up':'keyboard_arrow_down';});
+        bdTog.addEventListener('click',function(e){e.stopPropagation();bdOpen.v=!bdOpen.v;bdBody.style.display=bdOpen.v?'':'none';bdIc.textContent=bdOpen.v?'keyboard_arrow_up':'keyboard_arrow_down';});
+        panel.appendChild(bdBody); panel.appendChild(reDiv());
+
+        /* Active Constraints */
+        var cons=el('div','re-cons'); cons.appendChild(el('div','re-cons-title','Active Constraints'));
+        data.constraints.forEach(function(con){
+          var row=el('div','re-con-row'); var ul=el('ul'); ul.style.flex='1'; var li=el('li'); li.style.cssText='list-style-type:disc;margin-left:15px'; li.textContent=con.lbl; ul.appendChild(li); row.appendChild(ul); row.appendChild(el('span','re-con-val',con.val)); cons.appendChild(row);
+        });
+        panel.appendChild(cons); panel.appendChild(reDiv());
+
+        /* History */
+        var hs=el('div','re-hist'); hs.appendChild(el('div','re-hist-title','How this recommendation changed in the last 7 days?')); hs.appendChild(el('div','re-hist-sub',data.nUpdates+' updates · '+c+data.histStart+' → '+c+data.rec));
+        data.hist.forEach(function(entry){
+          var row=el('div','re-hist-row'+(entry.isCur?' cur':''));
+          var ic2=el('span','mi material-icons-round re-hist-ic'+(entry.isCur?' cur':'')); ic2.textContent=entry.isCur?'arrow_forward':'chevron_right'; ic2.style.fontSize='12px';
+          row.appendChild(ic2); row.appendChild(el('span','re-hist-time',entry.lbl)); row.appendChild(el('span','re-hist-evt',entry.evt));
+          if(entry.delta!==null){var de=el('span','re-hist-delta'+(entry.delta>=0?' pos':' neg'));de.textContent=(entry.delta>=0?'+':'−')+c+Math.abs(Math.round(entry.delta));row.appendChild(de);}
+          else{row.appendChild(el('span','re-hist-delta',''));}
+          row.appendChild(el('span','re-hist-rate',c+Math.round(entry.rate))); hs.appendChild(row);
+        });
+        panel.appendChild(hs); panel.appendChild(reDiv());
+
+        /* Footer */
+        var foot=el('div','re-foot'); var fb=el('button','re-foot-btn'); fb.appendChild(document.createTextNode('View full pricing activity ')); var fwIc=el('span','mi material-icons-round','arrow_forward');fwIc.style.fontSize='16px';fb.appendChild(fwIc); foot.appendChild(fb); panel.appendChild(foot);
+        return panel;
+      }
+
+      function showExplainerPanel(iconEl, data, d) {
+        if (_rePanel) {
+          document.removeEventListener('click', _reOutsideHandler, true);
+          _rePanel.remove(); _rePanel = null;
+          if (_reIconEl === iconEl) { _reIconEl = null; return; }
+        }
+        _reIconEl = iconEl;
+        _rePanel  = buildExplainerPanel(data, d);
+        document.body.appendChild(_rePanel);
+        var r=iconEl.getBoundingClientRect(), pw=280, ph=Math.min(_rePanel.scrollHeight, window.innerHeight*0.82);
+        var left=r.left+r.width/2-pw/2, top=r.bottom+6;
+        if(left+pw>window.innerWidth-8) left=window.innerWidth-pw-8;
+        if(left<8) left=8;
+        if(top+ph>window.innerHeight-8){top=r.top-ph-6;if(top<8)top=8;}
+        _rePanel.style.left=left+'px'; _rePanel.style.top=top+'px';
+        setTimeout(function(){ document.addEventListener('click',_reOutsideHandler,true); },0);
+      }
+
+      function _reOutsideHandler(e) {
+        if(_rePanel && !_rePanel.contains(e.target) && e.target!==_reIconEl){
+          document.removeEventListener('click',_reOutsideHandler,true);
+          _rePanel.remove(); _rePanel=null; _reIconEl=null;
+        }
+      }
+
       function build() {
         var selId   = (window.rposNav ? window.rposNav.getSelectedId() : null) || 'hbcn-t-r-bar';
 
@@ -8272,11 +8595,14 @@
                   var explainIcon = document.createElement('span');
                   explainIcon.className = 'mi material-icons-round';
                   explainIcon.textContent = 'zoom_in';
-                  var tooltip = document.createElement('div');
-                  tooltip.className = 'rt-rec-tooltip';
-                  tooltip.innerHTML = '<strong>Rate Explainer</strong>Placeholder content: context and reasoning behind this recommended rate.';
                   explainBtn.appendChild(explainIcon);
-                  explainBtn.appendChild(tooltip);
+                  (function(btn, colIdx, colDate) {
+                    btn.addEventListener('click', function(e) {
+                      e.stopPropagation();
+                      var exData = genExplainerData(hotelId, colIdx, colDate);
+                      if (exData) showExplainerPanel(btn, exData, colDate);
+                    });
+                  }(explainBtn, di, d));
                   td.appendChild(explainBtn);
                 }
                 if (val && (val[0] === '€' || val[0] === '£' || val[0] === '$')) {
