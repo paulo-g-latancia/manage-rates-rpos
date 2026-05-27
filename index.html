@@ -848,7 +848,7 @@
     }
     .rt-spinner {
       position: absolute;
-      right: 8px;
+      left: 25px;
       top: calc(50% - 6.5px);
       width: 13px; height: 13px;
       border: 2px solid rgba(36,139,134,0.2);
@@ -8241,7 +8241,6 @@
                 });
                 wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
-                if (isLoading && loadingCol === di && loadingSource === 'override') wrap.style.marginRight = '20px';
                 td.appendChild(radioEl); td.appendChild(wrap);
                 if (isLoading && loadingCol === di && loadingSource === 'override') {
                   var spinner = document.createElement('span');
