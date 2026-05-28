@@ -3579,6 +3579,7 @@
     panel.classList.add('open');
     panel.removeAttribute('aria-hidden');
     alertsBtn.classList.add('sp-active');
+    renderAlerts(currentPage);
     updateBadge();
     setTimeout(function () { document.getElementById('ap-chat-input').focus({ preventScroll: true }); }, 50);
   }
