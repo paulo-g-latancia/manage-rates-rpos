@@ -3647,7 +3647,7 @@
   });
 
   /* ── spark/insight pill clicks in main table ─── */
-  document.getElementById('rates-table').addEventListener('click', function (e) {
+  document.getElementById('rt-wrap').addEventListener('click', function (e) {
     var pill = e.target.closest('.alert-pill');
     if (!pill || pill.classList.contains('none')) return;
     e.stopPropagation(); // prevent the outside-click handler from closing the panel
