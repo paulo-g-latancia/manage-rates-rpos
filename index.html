@@ -9066,7 +9066,7 @@
         }
 
         /* Y-axis labels */
-        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
+        ctx.fillStyle = LABEL; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'right';
         [0, 0.25, 0.5, 0.75, 1].forEach(function(f) {
           ctx.fillText(metricFmt(f), mg.l - 4, yAt(f) + 3);
         });
@@ -9074,7 +9074,7 @@
         ctx.save();
         ctx.translate(8, mg.t + cH / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = LABEL; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(metricLbl, 0, 0);
         ctx.restore();
 
@@ -9082,7 +9082,7 @@
         var xTicks = cW > 200
           ? [0, 5, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59]
           : [0, 11, 23, 35, 47, 59];
-        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = LABEL; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'center';
         xTicks.forEach(function(d) {
           ctx.fillText(d, xAt(d), H - mg.b + 11);
         });
@@ -9124,7 +9124,7 @@
           var nx = xAt(_di);
           ctx.strokeStyle = '#78909C'; ctx.lineWidth = 1; ctx.setLineDash([]);
           ctx.beginPath(); ctx.moveTo(nx, mg.t); ctx.lineTo(nx, H - mg.b); ctx.stroke();
-          ctx.fillStyle = '#78909C'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'left';
+          ctx.fillStyle = '#78909C'; ctx.font = '10.5px Lato,sans-serif'; ctx.textAlign = 'left';
           ctx.fillText('Today', nx + 3, mg.t + 10);
         }
 
@@ -9149,7 +9149,7 @@
         LEG.push({ label: 'Transient–OTA', color: '#B39DDB', sw: 'fill' });
         if (bcActive['demand-fcst'])   LEG.push({ label: 'Demand Fcst',   color: '#248b86', sw: 'dot'  });
         if (bcActive['final-ly'])      LEG.push({ label: 'Final LY',      color: '#E53935', sw: 'line' });
-        ctx.font = '8.5px Lato,sans-serif';
+        ctx.font = '10.5px Lato,sans-serif';
 
         function drawLegRow(items, cy) {
           var total = 0;
@@ -9261,31 +9261,31 @@
         ctx.setLineDash([]);
 
         /* Left Y labels — primary metric */
-        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
+        ctx.fillStyle = '#636e72'; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'right';
         for (var g = 0; g <= 4; g++) {
           ctx.fillText(getOrfFmt(orfPrimary, maxPri * (4 - g) / 4), mg.l - 4, mg.t + (g / 4) * cH + 3);
         }
         ctx.save();
         ctx.translate(9, mg.t + cH / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#636e72'; ctx.font = '10.5px Lato,sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(getOrfLabel(orfPrimary), 0, 0);
         ctx.restore();
 
         /* Right Y labels — secondary metric */
-        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'left';
+        ctx.fillStyle = '#636e72'; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'left';
         for (var g = 0; g <= 4; g++) {
           ctx.fillText(getOrfFmt(orfSecondary, maxSec * (4 - g) / 4), W - mg.r + 4, mg.t + (g / 4) * cH + 3);
         }
         ctx.save();
         ctx.translate(W - 9, mg.t + cH / 2);
         ctx.rotate(Math.PI / 2);
-        ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#636e72'; ctx.font = '10.5px Lato,sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(getOrfLabel(orfSecondary), 0, 0);
         ctx.restore();
 
         /* X-axis labels and "Price" label */
-        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#636e72'; ctx.font = '11px Lato,sans-serif'; ctx.textAlign = 'center';
         for (var g = 0; g <= 4; g++) {
           var ri = Math.round(g * STEPS / 4);
           ctx.fillText(rd.cur + Math.round(rd.rates[ri]), mg.l + (g / 4) * cW, H - mg.b + 12);
@@ -9355,7 +9355,7 @@
           ctx.save();
           ctx.translate(x + 3, H - mg.b - 2);
           ctx.rotate(-Math.PI / 2);
-          ctx.fillStyle = mk.color; ctx.font = 'bold 7.5px Lato,sans-serif'; ctx.textAlign = 'left';
+          ctx.fillStyle = mk.color; ctx.font = 'bold 9.5px Lato,sans-serif'; ctx.textAlign = 'left';
           ctx.fillText(mk.label, 0, 0);
           ctx.restore();
         });
@@ -9367,7 +9367,7 @@
           { label: priLbl, color: ORF_NAVY, sw: 'line' },
           { label: secLbl, color: ORF_GRN,  sw: 'dash' }
         ];
-        ctx.font = '8.5px Lato,sans-serif';
+        ctx.font = '10.5px Lato,sans-serif';
         var totalW = 0;
         LEG_R.forEach(function(it) { totalW += 14 + ctx.measureText(it.label).width + 16; });
         totalW -= 16;
@@ -9383,7 +9383,7 @@
             ctx.setLineDash([]);
           }
           lx += 14;
-          ctx.fillStyle = '#636e72'; ctx.textAlign = 'left'; ctx.font = '8.5px Lato,sans-serif';
+          ctx.fillStyle = '#636e72'; ctx.textAlign = 'left'; ctx.font = '10.5px Lato,sans-serif';
           ctx.fillText(it.label, lx, ly + 3);
           lx += ctx.measureText(it.label).width + 16;
         });
