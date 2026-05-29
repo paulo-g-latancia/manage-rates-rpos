@@ -8611,7 +8611,13 @@
                 td.addEventListener('click', function() {
                   if (isLoading) return;
                   radioEl.checked = true; radioValues[di] = 'override';
-                  if (selectedCol === di) inp.focus();
+                  if (recommendedApplied[di]) {
+                    recommendedApplied[di] = false;
+                    focusOverrideAfterBuild = true;
+                    build();
+                  } else {
+                    if (selectedCol === di) inp.focus();
+                  }
                 });
                 wrap.appendChild(cur); wrap.appendChild(inp);
                 if (di === selectedCol) overrideInputToFocus = inp;
