@@ -8637,7 +8637,15 @@
                   if (isLoading) return;
                   var wasRec = (radioValues[di] === 'recommended');
                   radioEl.checked = true; radioValues[di] = radioKey;
-                  if (isRecommended && !wasRec) { selectedCol = di; startLoading(di, 'recommended'); } else updatePublishBtn();
+                  if (isRecommended && !wasRec) {
+                    selectedCol = di; startLoading(di, 'recommended');
+                  } else {
+                    if (isCurrent && recommendedApplied[di]) {
+                      recommendedApplied[di] = false;
+                      build();
+                    }
+                    updatePublishBtn();
+                  }
                 });
                 var val = dbVal(row, hotelId, selId, di, d);
                 if (isRecommended) {
