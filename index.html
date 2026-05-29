@@ -552,6 +552,51 @@
       display: block;
       cursor: crosshair;
     }
+
+    /* ── Chart header inline controls ─────────────────────── */
+    .mc-chart-title { text-transform: none; letter-spacing: 0; color: var(--text-primary); font-size: 11px; }
+    .mc-chart-title-row { justify-content: flex-start; gap: 3px; overflow: visible; }
+    .mc-ctl-sep  { color: #b0bbbf; font-size: 11px; flex-shrink: 0; padding: 0 1px; }
+    .mc-ctl-word { color: var(--text-sec); font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+    .mc-ctl-wrap {
+      position: relative; display: inline-flex; align-items: center; gap: 2px;
+      cursor: pointer; padding: 1px 3px 1px 4px; border-radius: 3px;
+      border: 1.5px solid transparent; user-select: none; flex-shrink: 0;
+    }
+    .mc-ctl-wrap:hover { background: rgba(36,139,134,0.07); }
+    .mc-ctl-wrap.open  { border-color: #248b86; }
+    .mc-ctl-lbl {
+      color: #248b86; font-size: 10px; font-weight: 700;
+      font-family: 'Lato', sans-serif; white-space: nowrap;
+    }
+    .mc-ctl-tri {
+      width: 0; height: 0;
+      border-left: 3px solid transparent; border-right: 3px solid transparent;
+      border-top: 4px solid #248b86; flex-shrink: 0; margin-top: 1px;
+    }
+    .mc-ctl-menu {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0;
+      background: white; border: 1px solid var(--grey-300); border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.14); z-index: 400;
+      min-width: 168px; padding: 4px 0;
+    }
+    .mc-ctl-wrap.open .mc-ctl-menu { display: block; }
+    .mc-ctl-opt {
+      padding: 8px 14px; font-size: 13px; color: var(--text-primary);
+      cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 10px;
+    }
+    .mc-ctl-opt:hover { background: var(--grey-50); }
+    .mc-ctl-cbx {
+      width: 15px; height: 15px; border: 1.5px solid #b0bbbf; border-radius: 3px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: white;
+    }
+    .mc-ctl-opt.checked .mc-ctl-cbx { background: #248b86; border-color: #248b86; }
+    .mc-ctl-chk {
+      display: none; width: 8px; height: 5px;
+      border-left: 1.5px solid white; border-bottom: 1.5px solid white;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+    .mc-ctl-opt.checked .mc-ctl-chk { display: block; }
     .mc-tooltip {
       position: fixed;
       background: #1c1c1c;
@@ -2924,6 +2969,27 @@
           <div class="mc-chart-box">
             <div class="mc-chart-title-row">
               <span class="mc-chart-title">Cumulative Booking Curve</span>
+              <span class="mc-ctl-sep">|</span>
+              <div class="mc-ctl-wrap" id="bc-metric-wrap">
+                <span class="mc-ctl-lbl" id="bc-metric-lbl">Rooms</span>
+                <span class="mc-ctl-tri"></span>
+                <div class="mc-ctl-menu" id="bc-metric-menu">
+                  <div class="mc-ctl-opt" data-bc-metric="rooms">Rooms</div>
+                  <div class="mc-ctl-opt" data-bc-metric="adr">ADR</div>
+                  <div class="mc-ctl-opt" data-bc-metric="revenue">Revenue</div>
+                </div>
+              </div>
+              <span class="mc-ctl-word">showing</span>
+              <div class="mc-ctl-wrap" id="bc-comp-wrap">
+                <span class="mc-ctl-lbl" id="bc-comp-lbl">Comparisons (3)</span>
+                <span class="mc-ctl-tri"></span>
+                <div class="mc-ctl-menu" id="bc-comp-menu">
+                  <div class="mc-ctl-opt checked" data-bc-comp="adj-cap"><span class="mc-ctl-cbx"><span class="mc-ctl-chk"></span></span>Adjusted Capacity</div>
+                  <div class="mc-ctl-opt checked" data-bc-comp="locked-budget"><span class="mc-ctl-cbx"><span class="mc-ctl-chk"></span></span>Locked Budget</div>
+                  <div class="mc-ctl-opt" data-bc-comp="demand-fcst"><span class="mc-ctl-cbx"><span class="mc-ctl-chk"></span></span>Demand Forecast</div>
+                  <div class="mc-ctl-opt checked" data-bc-comp="final-ly"><span class="mc-ctl-cbx"><span class="mc-ctl-chk"></span></span>Final LY</div>
+                </div>
+              </div>
             </div>
             <canvas id="chart-booking"></canvas>
           </div>
@@ -2932,6 +2998,30 @@
           <div class="mc-chart-box">
             <div class="mc-chart-title-row">
               <span class="mc-chart-title">Optimal Rate Finder</span>
+              <span class="mc-ctl-sep">|</span>
+              <div class="mc-ctl-wrap" id="orf-primary-wrap">
+                <span class="mc-ctl-lbl" id="orf-primary-lbl">Net Room Revenue</span>
+                <span class="mc-ctl-tri"></span>
+                <div class="mc-ctl-menu" id="orf-primary-menu">
+                  <div class="mc-ctl-opt" data-orf-pri="bookings">Bookings</div>
+                  <div class="mc-ctl-opt" data-orf-pri="occupancy">Occupancy</div>
+                  <div class="mc-ctl-opt" data-orf-pri="room-revenue">Room Revenue</div>
+                  <div class="mc-ctl-opt" data-orf-pri="net-room-revenue">Net Room Revenue</div>
+                  <div class="mc-ctl-opt" data-orf-pri="adr">ADR</div>
+                </div>
+              </div>
+              <span class="mc-ctl-word">vs.</span>
+              <div class="mc-ctl-wrap" id="orf-secondary-wrap">
+                <span class="mc-ctl-lbl" id="orf-secondary-lbl">Bookings</span>
+                <span class="mc-ctl-tri"></span>
+                <div class="mc-ctl-menu" id="orf-secondary-menu">
+                  <div class="mc-ctl-opt" data-orf-sec="bookings">Bookings</div>
+                  <div class="mc-ctl-opt" data-orf-sec="occupancy">Occupancy</div>
+                  <div class="mc-ctl-opt" data-orf-sec="room-revenue">Room Revenue</div>
+                  <div class="mc-ctl-opt" data-orf-sec="net-room-revenue">Net Room Revenue</div>
+                  <div class="mc-ctl-opt" data-orf-sec="adr">ADR</div>
+                </div>
+              </div>
             </div>
             <canvas id="chart-rate" style="cursor:pointer"></canvas>
           </div>
@@ -8793,6 +8883,12 @@
       var LABEL  = '#9fa8ad';
       var DAYS   = 60; // span for booking curve
 
+      /* ─ Chart controls state ─ */
+      var bcMetric  = 'rooms'; // 'rooms' | 'adr' | 'revenue'
+      var bcActive  = { 'adj-cap': true, 'locked-budget': true, 'demand-fcst': false, 'final-ly': true };
+      var orfPrimary   = 'net-room-revenue';
+      var orfSecondary = 'bookings';
+
       /* ─ Booking curve data ─ */
       function genBooking(hotelId, di) {
         var h = HDB[hotelId] || HDB.hbcn;
@@ -8950,17 +9046,36 @@
         });
         ctx.setLineDash([]);
 
+        /* Metric scale/formatter */
+        var baseRate = _rd ? _rd.curRate : 200;
+        var mCur = (_rd && _rd.cur) ? _rd.cur : '€';
+        var metricLbl, metricFmt;
+        if (bcMetric === 'adr') {
+          metricLbl = 'ADR';
+          metricFmt = function(f) { return mCur + Math.round(f * baseRate); };
+        } else if (bcMetric === 'revenue') {
+          var revScale = baseRate * rooms;
+          metricLbl = 'Revenue';
+          metricFmt = function(f) {
+            var v = f * revScale;
+            return mCur + (v >= 1000 ? Math.round(v / 1000) + 'k' : Math.round(v));
+          };
+        } else {
+          metricLbl = 'Rooms';
+          metricFmt = function(f) { return Math.round(f * rooms); };
+        }
+
         /* Y-axis labels */
         ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
         [0, 0.25, 0.5, 0.75, 1].forEach(function(f) {
-          ctx.fillText(Math.round(rooms * f), mg.l - 4, yAt(f) + 3);
+          ctx.fillText(metricFmt(f), mg.l - 4, yAt(f) + 3);
         });
-        /* "Rooms" rotated label */
+        /* Rotated Y label */
         ctx.save();
         ctx.translate(8, mg.t + cH / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Rooms', 0, 0);
+        ctx.fillText(metricLbl, 0, 0);
         ctx.restore();
 
         /* X-axis ticks */
@@ -8999,10 +9114,10 @@
           }
           ctx.stroke(); ctx.setLineDash([]);
         }
-        drawPolyline(bd.cap,      '#F5A623', 1.5, [5, 4]);  /* Adjusted Capacity (gold dashed) */
-        drawPolyline(bd.budget,   '#B0BEC5', 1.5, [5, 4]);  /* Locked Budget (grey dashed)     */
-        drawPolyline(bd.forecast, '#248b86', 1.5, [2, 3]);  /* Demand Forecast (teal dotted)   */
-        drawPolyline(bd.ly,       '#E53935', 2,   []);      /* Final LY (red solid)             */
+        if (bcActive['adj-cap'])       drawPolyline(bd.cap,      '#F5A623', 1.5, [5, 4]);
+        if (bcActive['locked-budget']) drawPolyline(bd.budget,   '#B0BEC5', 1.5, [5, 4]);
+        if (bcActive['demand-fcst'])   drawPolyline(bd.forecast, '#248b86', 1.5, [2, 3]);
+        if (bcActive['final-ly'])      drawPolyline(bd.ly,       '#E53935', 2,   []);
 
         /* Today marker (solid vertical line) */
         if (_di >= 0 && _di <= DAYS) {
@@ -9027,14 +9142,13 @@
         }
 
         /* Legend — 2 rows inside canvas bottom */
-        var LEG = [
-          { label: 'Adj. Capacity', color: '#F5A623', sw: 'dash' },
-          { label: 'Locked Budget', color: '#B0BEC5', sw: 'dash' },
-          { label: 'BAR',           color: '#8BC34A', sw: 'fill' },
-          { label: 'Transient–OTA', color: '#B39DDB', sw: 'fill' },
-          { label: 'Demand Fcst',   color: '#248b86', sw: 'dot'  },
-          { label: 'Final LY',      color: '#E53935', sw: 'line' }
-        ];
+        var LEG = [];
+        if (bcActive['adj-cap'])       LEG.push({ label: 'Adj. Capacity', color: '#F5A623', sw: 'dash' });
+        if (bcActive['locked-budget']) LEG.push({ label: 'Locked Budget', color: '#B0BEC5', sw: 'dash' });
+        LEG.push({ label: 'BAR',           color: '#8BC34A', sw: 'fill' });
+        LEG.push({ label: 'Transient–OTA', color: '#B39DDB', sw: 'fill' });
+        if (bcActive['demand-fcst'])   LEG.push({ label: 'Demand Fcst',   color: '#248b86', sw: 'dot'  });
+        if (bcActive['final-ly'])      LEG.push({ label: 'Final LY',      color: '#E53935', sw: 'line' });
         ctx.font = '8.5px Lato,sans-serif';
 
         function drawLegRow(items, cy) {
@@ -9064,14 +9178,45 @@
             cx += ctx.measureText(it.label).width + 8;
           });
         }
-        drawLegRow(LEG.slice(0, 3), H - mg.b + 36);
-        drawLegRow(LEG.slice(3),    H - mg.b + 52);
+        var row1 = LEG.slice(0, 3), row2 = LEG.slice(3);
+        drawLegRow(row1, H - mg.b + 36);
+        if (row2.length) drawLegRow(row2, H - mg.b + 52);
+      }
+
+      /* ─ ORF metric helpers ─ */
+      function getOrfSeries(metric) {
+        if (!_rd) return [];
+        var rooms = HDB[_hotelId] ? HDB[_hotelId].rooms : 180;
+        switch (metric) {
+          case 'bookings':          return _rd.occs.map(function(o) { return o * rooms; });
+          case 'occupancy':         return _rd.occs.map(function(o) { return o * 100; });
+          case 'room-revenue':      return _rd.revs;
+          case 'net-room-revenue':  return _rd.revs.map(function(v) { return v * 0.93; });
+          case 'adr':               return _rd.rates;
+          default:                  return _rd.revs;
+        }
+      }
+      function getOrfLabel(metric) {
+        return { bookings: 'Bookings', occupancy: 'Occupancy %',
+                 'room-revenue': 'Room Revenue', 'net-room-revenue': 'Net Room Revenue',
+                 adr: 'ADR' }[metric] || metric;
+      }
+      function getOrfFmt(metric, val) {
+        var cur = (_rd && _rd.cur) || '$';
+        switch (metric) {
+          case 'bookings':  return Math.round(val);
+          case 'occupancy': return Math.round(val) + '%';
+          case 'room-revenue': case 'net-room-revenue':
+            return cur + (val >= 1000 ? Math.round(val / 1000) + 'k' : Math.round(val));
+          case 'adr': return cur + Math.round(val);
+          default:    return Math.round(val);
+        }
       }
 
       /* ═══════════════════════════════════════════════════
          CHART 2 — OPTIMAL RATE FINDER
-         Revenue (navy, left) + Bookings (green dashed, right)
-         4 annotated vertical markers: STLY, Current, Max Rev, Competitor Avg
+         Primary (navy solid, left axis) + Secondary (green dashed, right axis)
+         Both axes controlled by orfPrimary / orfSecondary state
          Click on chart → sets override for selected stay date
          ═══════════════════════════════════════════════ */
       var _rDim = null;
@@ -9082,7 +9227,7 @@
         var cv = prepCanvas('chart-rate');
         if (!cv) return;
         var ctx = cv.ctx, W = cv.W, H = cv.H;
-        var mg  = { l: 48, r: 38, t: 12, b: 52 };
+        var mg  = { l: 48, r: 40, t: 12, b: 52 };
         var cW  = W - mg.l - mg.r;
         var cH  = H - mg.t - mg.b;
         _rDim   = { mg: mg, cW: cW, cH: cH, W: W, H: H };
@@ -9090,17 +9235,17 @@
         var rd = _rd;
         if (!rd) return;
 
-        var STEPS    = rd.steps;
-        var rooms    = HDB[_hotelId] ? HDB[_hotelId].rooms : 180;
-        var maxRev   = Math.max.apply(null, rd.revs) * 1.08;
-        var bookings = rd.occs.map(function(o) { return o * rooms; });
-        var maxBook  = Math.max.apply(null, bookings) * 1.08;
+        var STEPS   = rd.steps;
+        var priData = getOrfSeries(orfPrimary);
+        var secData = getOrfSeries(orfSecondary);
+        var maxPri  = Math.max.apply(null, priData) * 1.08;
+        var maxSec  = Math.max.apply(null, secData) * 1.08;
 
-        function xAt(i)     { return mg.l + (i / STEPS) * cW; }
-        function xAtR(r)    { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
-        function yAtRev(v)  { return mg.t + (1 - v / maxRev) * cH; }
-        function yAtBook(b) { return mg.t + (1 - b / maxBook) * cH; }
-        function rToIdx(r)  {
+        function xAt(i)    { return mg.l + (i / STEPS) * cW; }
+        function xAtR(r)   { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
+        function yAtPri(v) { return mg.t + (1 - v / maxPri) * cH; }
+        function yAtSec(v) { return mg.t + (1 - v / maxSec) * cH; }
+        function rToIdx(r) {
           return Math.max(0, Math.min(STEPS,
             Math.round(((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * STEPS)));
         }
@@ -9115,32 +9260,28 @@
         }
         ctx.setLineDash([]);
 
-        /* Left Y labels — Net Room Revenue */
+        /* Left Y labels — primary metric */
         ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
         for (var g = 0; g <= 4; g++) {
-          var v   = (maxRev * (4 - g)) / 4;
-          var lbl = v >= 10000 ? '$' + Math.round(v / 1000) + 'k'
-                  : v >= 1000  ? '$' + (Math.round(v / 100) / 10) + 'k'
-                  : '$' + Math.round(v);
-          ctx.fillText(lbl, mg.l - 4, mg.t + (g / 4) * cH + 3);
+          ctx.fillText(getOrfFmt(orfPrimary, maxPri * (4 - g) / 4), mg.l - 4, mg.t + (g / 4) * cH + 3);
         }
         ctx.save();
         ctx.translate(9, mg.t + cH / 2);
         ctx.rotate(-Math.PI / 2);
         ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Net Room Revenue', 0, 0);
+        ctx.fillText(getOrfLabel(orfPrimary), 0, 0);
         ctx.restore();
 
-        /* Right Y labels — Bookings */
+        /* Right Y labels — secondary metric */
         ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'left';
         for (var g = 0; g <= 4; g++) {
-          ctx.fillText(Math.round(maxBook * (4 - g) / 4), W - mg.r + 4, mg.t + (g / 4) * cH + 3);
+          ctx.fillText(getOrfFmt(orfSecondary, maxSec * (4 - g) / 4), W - mg.r + 4, mg.t + (g / 4) * cH + 3);
         }
         ctx.save();
         ctx.translate(W - 9, mg.t + cH / 2);
         ctx.rotate(Math.PI / 2);
         ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Bookings', 0, 0);
+        ctx.fillText(getOrfLabel(orfSecondary), 0, 0);
         ctx.restore();
 
         /* X-axis labels and "Price" label */
@@ -9151,30 +9292,30 @@
         }
         ctx.fillText('Price', mg.l + cW / 2, H - mg.b + 23);
 
-        /* Revenue area fill (subtle navy) */
+        /* Primary area fill (subtle navy) */
         var grad = ctx.createLinearGradient(0, mg.t, 0, H - mg.b);
         grad.addColorStop(0, 'rgba(30,58,123,0.08)');
         grad.addColorStop(1, 'rgba(30,58,123,0.01)');
         ctx.beginPath();
-        rd.revs.forEach(function(v, i) {
-          var x = xAt(i), y = yAtRev(v);
+        priData.forEach(function(v, i) {
+          var x = xAt(i), y = yAtPri(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.lineTo(xAt(STEPS), H - mg.b); ctx.lineTo(xAt(0), H - mg.b); ctx.closePath();
         ctx.fillStyle = grad; ctx.fill();
 
-        /* Bookings line (green dashed) */
+        /* Secondary line (green dashed) */
         ctx.beginPath(); ctx.strokeStyle = ORF_GRN; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
-        bookings.forEach(function(b, i) {
-          var x = xAt(i), y = yAtBook(b);
+        secData.forEach(function(v, i) {
+          var x = xAt(i), y = yAtSec(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke(); ctx.setLineDash([]);
 
-        /* Revenue line (navy solid) */
+        /* Primary line (navy solid) */
         ctx.beginPath(); ctx.strokeStyle = ORF_NAVY; ctx.lineWidth = 2; ctx.setLineDash([]);
-        rd.revs.forEach(function(v, i) {
-          var x = xAt(i), y = yAtRev(v);
+        priData.forEach(function(v, i) {
+          var x = xAt(i), y = yAtPri(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
@@ -9184,34 +9325,33 @@
           var hx = xAt(hoverIdx);
           ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1; ctx.setLineDash([]);
           ctx.beginPath(); ctx.moveTo(hx, mg.t); ctx.lineTo(hx, H - mg.b); ctx.stroke();
-          ctx.beginPath(); ctx.arc(hx, yAtRev(rd.revs[hoverIdx]), 3.5, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(hx, yAtPri(priData[hoverIdx]), 3.5, 0, Math.PI * 2);
           ctx.fillStyle = ORF_NAVY; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-          ctx.beginPath(); ctx.arc(hx, yAtBook(bookings[hoverIdx]), 3.5, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(hx, yAtSec(secData[hoverIdx]), 3.5, 0, Math.PI * 2);
           ctx.fillStyle = ORF_GRN; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
 
-        /* Vertical markers with rotated labels */
+        /* Vertical markers: find optimal index for current primary metric */
+        var priOptIdx = 0;
+        for (var i = 1; i <= STEPS; i++) { if (priData[i] > priData[priOptIdx]) priOptIdx = i; }
         var MK = [
-          { rate: rd.stlyRate,          color: '#F5A623', label: 'STLY ' + rd.cur + Math.round(rd.stlyRate) },
-          { rate: rd.curRate,           color: '#26C6DA', label: 'Current Rate ' + rd.cur + Math.round(rd.curRate) },
-          { rate: rd.rates[rd.optIdx],  color: '#EC407A', label: 'Max Rev ' + rd.cur + Math.round(rd.rates[rd.optIdx]) },
-          { rate: rd.compAvg,           color: '#AB47BC', label: 'Competitor Avg ' + rd.cur + Math.round(rd.compAvg) }
+          { rate: rd.stlyRate,            color: '#F5A623', label: 'STLY ' + rd.cur + Math.round(rd.stlyRate) },
+          { rate: rd.curRate,             color: '#26C6DA', label: 'Current Rate ' + rd.cur + Math.round(rd.curRate) },
+          { rate: rd.rates[priOptIdx],    color: '#EC407A', label: 'Max ' + rd.cur + Math.round(rd.rates[priOptIdx]) },
+          { rate: rd.compAvg,             color: '#AB47BC', label: 'Comp. Avg ' + rd.cur + Math.round(rd.compAvg) }
         ];
         MK.forEach(function(mk) {
           var x = xAtR(mk.rate);
           if (x < mg.l - 1 || x > W - mg.r + 1) return;
-          /* Dashed vertical line */
           ctx.strokeStyle = mk.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
           ctx.globalAlpha = 0.75;
           ctx.beginPath(); ctx.moveTo(x, mg.t); ctx.lineTo(x, H - mg.b); ctx.stroke();
           ctx.globalAlpha = 1; ctx.setLineDash([]);
-          /* Circle on revenue curve */
           var ri  = rToIdx(mk.rate);
-          var ry  = yAtRev(rd.revs[ri]);
+          var ry  = yAtPri(priData[ri]);
           ctx.beginPath(); ctx.arc(x, ry, 4, 0, Math.PI * 2);
           ctx.fillStyle = mk.color; ctx.fill();
           ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
-          /* Rotated label (drawn upward from bottom of chart area) */
           ctx.save();
           ctx.translate(x + 3, H - mg.b - 2);
           ctx.rotate(-Math.PI / 2);
@@ -9221,9 +9361,11 @@
         });
 
         /* Legend at bottom */
+        var priLbl = getOrfLabel(orfPrimary) + ' (Left)';
+        var secLbl = getOrfLabel(orfSecondary) + ' (Right)';
         var LEG_R = [
-          { label: 'Net Room Revenue (Left)', color: ORF_NAVY, sw: 'line' },
-          { label: 'Bookings (Right)',         color: ORF_GRN,  sw: 'dash' }
+          { label: priLbl, color: ORF_NAVY, sw: 'line' },
+          { label: secLbl, color: ORF_GRN,  sw: 'dash' }
         ];
         ctx.font = '8.5px Lato,sans-serif';
         var totalW = 0;
@@ -9282,14 +9424,13 @@
             if (mx < mg.l || mx > _rDim.W - mg.r) { hideTip(); drawRate(); return; }
             var idx  = Math.max(0, Math.min(_rd.steps, Math.round(((mx - mg.l) / _rDim.cW) * _rd.steps)));
             drawRate(idx);
-            var rate  = _rd.rates[idx];
-            var rev   = _rd.revs[idx];
-            var occ   = _rd.occs[idx];
-            var rooms = HDB[_hotelId] ? HDB[_hotelId].rooms : 180;
+            var rate   = _rd.rates[idx];
+            var priVal = getOrfSeries(orfPrimary)[idx];
+            var secVal = getOrfSeries(orfSecondary)[idx];
             showTip(e.clientX, e.clientY,
               '<span style="color:#9fa8ad;font-size:10px">Rate: ' + _rd.cur + Math.round(rate) + ' &middot; click to apply</span><br>' +
-              '<span style="color:' + ORF_NAVY + '">&#9679;</span> Net Room Rev: <b>' + _rd.cur + Math.round(rev).toLocaleString() + '</b><br>' +
-              '<span style="color:' + ORF_GRN  + '">&#9679;</span> Bookings: <b>' + Math.round(occ * rooms) + '</b>'
+              '<span style="color:' + ORF_NAVY + '">&#9679;</span> ' + getOrfLabel(orfPrimary) + ': <b>' + getOrfFmt(orfPrimary, priVal) + '</b><br>' +
+              '<span style="color:' + ORF_GRN  + '">&#9679;</span> ' + getOrfLabel(orfSecondary) + ': <b>' + getOrfFmt(orfSecondary, secVal) + '</b>'
             );
           });
           cvR.addEventListener('mouseleave', function () { hideTip(); drawRate(); });
@@ -9322,8 +9463,92 @@
 
       window.rposCharts = { render: render };
 
-      /* hovers wired up once */
+      /* ─ Chart header control dropdowns ─ */
+      function setupControls() {
+        function openMenu(wrap) {
+          document.querySelectorAll('.mc-ctl-wrap.open').forEach(function(w) {
+            if (w !== wrap) w.classList.remove('open');
+          });
+          wrap.classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.mc-ctl-wrap')) {
+            document.querySelectorAll('.mc-ctl-wrap.open').forEach(function(w) {
+              w.classList.remove('open');
+            });
+          }
+        });
+
+        /* ── Booking curve: Y-axis metric ── */
+        var bcMWrap = document.getElementById('bc-metric-wrap');
+        var bcMLbl  = document.getElementById('bc-metric-lbl');
+        if (bcMWrap) {
+          bcMWrap.addEventListener('click', function(e) { e.stopPropagation(); openMenu(bcMWrap); });
+          bcMWrap.querySelectorAll('[data-bc-metric]').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+              e.stopPropagation();
+              bcMetric = opt.dataset.bcMetric;
+              bcMLbl.textContent = opt.textContent.trim();
+              bcMWrap.classList.remove('open');
+              drawBooking();
+            });
+          });
+        }
+
+        /* ── Booking curve: comparisons ── */
+        var bcCWrap = document.getElementById('bc-comp-wrap');
+        var bcCLbl  = document.getElementById('bc-comp-lbl');
+        if (bcCWrap) {
+          bcCWrap.addEventListener('click', function(e) { e.stopPropagation(); openMenu(bcCWrap); });
+          bcCWrap.querySelectorAll('[data-bc-comp]').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+              e.stopPropagation();
+              var key = opt.dataset.bcComp;
+              bcActive[key] = !bcActive[key];
+              opt.classList.toggle('checked', !!bcActive[key]);
+              var count = Object.keys(bcActive).filter(function(k) { return bcActive[k]; }).length;
+              bcCLbl.textContent = 'Comparisons (' + count + ')';
+              drawBooking();
+            });
+          });
+        }
+
+        /* ── ORF: primary metric ── */
+        var orfPWrap = document.getElementById('orf-primary-wrap');
+        var orfPLbl  = document.getElementById('orf-primary-lbl');
+        if (orfPWrap) {
+          orfPWrap.addEventListener('click', function(e) { e.stopPropagation(); openMenu(orfPWrap); });
+          orfPWrap.querySelectorAll('[data-orf-pri]').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+              e.stopPropagation();
+              orfPrimary = opt.dataset.orfPri;
+              orfPLbl.textContent = opt.textContent.trim();
+              orfPWrap.classList.remove('open');
+              drawRate();
+            });
+          });
+        }
+
+        /* ── ORF: secondary metric ── */
+        var orfSWrap = document.getElementById('orf-secondary-wrap');
+        var orfSLbl  = document.getElementById('orf-secondary-lbl');
+        if (orfSWrap) {
+          orfSWrap.addEventListener('click', function(e) { e.stopPropagation(); openMenu(orfSWrap); });
+          orfSWrap.querySelectorAll('[data-orf-sec]').forEach(function(opt) {
+            opt.addEventListener('click', function(e) {
+              e.stopPropagation();
+              orfSecondary = opt.dataset.orfSec;
+              orfSLbl.textContent = opt.textContent.trim();
+              orfSWrap.classList.remove('open');
+              drawRate();
+            });
+          });
+        }
+      }
+
+      /* hovers and controls wired up once */
       setupHovers();
+      setupControls();
 
       /* initial render after layout is stable */
       setTimeout(function () {
