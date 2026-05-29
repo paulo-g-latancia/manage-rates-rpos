@@ -2923,12 +2923,7 @@
           <!-- Booking Curve -->
           <div class="mc-chart-box">
             <div class="mc-chart-title-row">
-              <span class="mc-chart-title">Booking Curve</span>
-              <div class="mc-chart-legend">
-                <span class="mc-leg"><span class="mc-leg-line" style="background:#248b86"></span>This Yr</span>
-                <span class="mc-leg"><span class="mc-leg-line" style="background:#9fa8ad"></span>Last Yr</span>
-                <span class="mc-leg"><span class="mc-leg-dash"></span>Budget</span>
-              </div>
+              <span class="mc-chart-title">Cumulative Booking Curve</span>
             </div>
             <canvas id="chart-booking"></canvas>
           </div>
@@ -2937,10 +2932,6 @@
           <div class="mc-chart-box">
             <div class="mc-chart-title-row">
               <span class="mc-chart-title">Optimal Rate Finder</span>
-              <div class="mc-chart-legend">
-                <span class="mc-leg"><span class="mc-leg-line" style="background:#248b86"></span>Revenue</span>
-                <span class="mc-leg"><span class="mc-leg-line" style="background:#FF5900"></span>Occupancy</span>
-              </div>
             </div>
             <canvas id="chart-rate" style="cursor:pointer"></canvas>
           </div>
@@ -8823,7 +8814,17 @@
         for (var i = 0; i <= DAYS; i++) {
           budget.push(Math.max(0, Math.min(1, sigmoid(0.11 * (i - 26)) * 0.84)));
         }
-        return { ty: ty, ly: ly, budget: budget, rooms: h.rooms };
+        /* Stacked bar splits of total pickup */
+        var bar = ty.map(function(v) { return v * 0.62; });
+        var ota = ty.map(function(v) { return v * 0.22; });
+        /* Demand forecast: slightly elevated vs ty (future-pointing) */
+        var forecast = ty.map(function(v, i) {
+          return Math.min(1, v * (1 + 0.18 * (1 - i / DAYS)));
+        });
+        /* Adjusted capacity: gently declining near full capacity */
+        var cap = [];
+        for (var i = 0; i <= DAYS; i++) { cap.push(0.94 - i * 0.0008); }
+        return { ty: ty, ly: ly, budget: budget, bar: bar, ota: ota, forecast: forecast, cap: cap, rooms: h.rooms };
       }
 
       /* ─ Optimal rate curve data ─ */
@@ -8850,7 +8851,10 @@
         }
         var optIdx = 0;
         for (var i = 1; i <= STEPS; i++) { if (revs[i] > revs[optIdx]) optIdx = i; }
-        return { rates: rates, revs: revs, occs: occs, curRate: curRate, recRate: recRate, optIdx: optIdx, cur: h.cur, steps: STEPS };
+        var stlyRate = curRate * (0.76 + rnd(dbHash(hotelId + 'stly' + di)) * 0.05);
+        var compAvg  = curRate * (1.04 + rnd(dbHash(hotelId + 'comp' + di)) * 0.04);
+        return { rates: rates, revs: revs, occs: occs, curRate: curRate, recRate: recRate,
+                 stlyRate: stlyRate, compAvg: compAvg, optIdx: optIdx, cur: h.cur, steps: STEPS };
       }
 
       /* ─ Tooltip ─ */
@@ -8911,7 +8915,9 @@
       var _rd      = null; // rate data
 
       /* ═══════════════════════════════════════════════════
-         CHART 1 — BOOKING CURVE
+         CHART 1 — CUMULATIVE BOOKING CURVE
+         Stacked bars (BAR green + OTA purple) from Today rightward
+         Lines: Adj.Capacity (gold), Locked Budget (grey), Demand Forecast (teal), Final LY (red)
          ═══════════════════════════════════════════════ */
       var _bDim = null;
 
@@ -8919,107 +8925,164 @@
         var cv = prepCanvas('chart-booking');
         if (!cv) return;
         var ctx = cv.ctx, W = cv.W, H = cv.H;
-        var mg  = { l: 32, r: 10, t: 16, b: 24 };
+        var mg  = { l: 34, r: 10, t: 12, b: 64 };
         var cW  = W - mg.l - mg.r;
         var cH  = H - mg.t - mg.b;
         _bDim   = { mg: mg, cW: cW, cH: cH, W: W, H: H };
 
         var bd = _bd;
         if (!bd) return;
+        var rooms = bd.rooms;
 
-        /* X axis: position i maps to (i) days before arrival.
-           i=0 (left)=arrival day, i=DAYS (right)=farthest-out.
-           Data plotted: bd.ty[DAYS-i] — curve is DECREASING left→right. */
+        /* i = days before arrival (0=arrival left, DAYS=far-out right)
+           dAt(i) = data array index */
         function xAt(i) { return mg.l + (i / DAYS) * cW; }
         function yAt(f) { return mg.t + (1 - f) * cH; }
-        /* Reverse helper: chart position i → data index */
         function dAt(i) { return DAYS - i; }
 
         ctx.clearRect(0, 0, W, H);
 
-        /* grid */
-        ctx.strokeStyle = GRID; ctx.lineWidth = 1;
-        for (var g = 0; g <= 4; g++) {
-          var gy = mg.t + (g / 4) * cH;
-          ctx.beginPath(); ctx.moveTo(mg.l, gy); ctx.lineTo(W - mg.r, gy); ctx.stroke();
-        }
-
-        /* y labels (rooms) */
-        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
-        for (var g = 0; g <= 4; g++) {
-          var v = Math.round(bd.rooms * (4 - g) / 4);
-          ctx.fillText(g < 4 ? v : 0, mg.l - 4, mg.t + (g / 4) * cH + 3);
-        }
-
-        /* x labels: arrival on left, 60d on right */
-        ctx.textAlign = 'center';
-        [0, 15, 30, 45, 60].forEach(function (dOut, gi) {
-          ctx.fillText(dOut === 0 ? 'Arr.' : dOut + 'd', mg.l + (gi / 4) * cW, H - 6);
+        /* Dashed horizontal gridlines */
+        ctx.lineWidth = 1;
+        [0, 0.25, 0.5, 0.75, 1].forEach(function(f) {
+          ctx.strokeStyle = '#e2e6e8'; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(mg.l, yAt(f)); ctx.lineTo(W - mg.r, yAt(f)); ctx.stroke();
         });
+        ctx.setLineDash([]);
 
-        /* area fill under This Year */
-        var grad = ctx.createLinearGradient(0, mg.t, 0, H - mg.b);
-        grad.addColorStop(0, 'rgba(36,139,134,0.13)');
-        grad.addColorStop(1, 'rgba(36,139,134,0.02)');
-        ctx.beginPath();
-        for (var i = 0; i <= DAYS; i++) {
-          var x = xAt(i), y = yAt(bd.ty[dAt(i)]);
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        /* Y-axis labels */
+        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
+        [0, 0.25, 0.5, 0.75, 1].forEach(function(f) {
+          ctx.fillText(Math.round(rooms * f), mg.l - 4, yAt(f) + 3);
+        });
+        /* "Rooms" rotated label */
+        ctx.save();
+        ctx.translate(8, mg.t + cH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Rooms', 0, 0);
+        ctx.restore();
+
+        /* X-axis ticks */
+        var xTicks = cW > 200
+          ? [0, 5, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59]
+          : [0, 11, 23, 35, 47, 59];
+        ctx.fillStyle = LABEL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
+        xTicks.forEach(function(d) {
+          ctx.fillText(d, xAt(d), H - mg.b + 11);
+        });
+        ctx.fillText('Days Before Arrival', mg.l + cW / 2, H - mg.b + 22);
+
+        /* Stacked bars — only from Today (i >= _di) rightward */
+        var barW = Math.max(1.5, (cW / DAYS) * 0.75);
+        for (var i = Math.max(0, _di); i <= DAYS; i++) {
+          var bx = xAt(i) - barW / 2;
+          var di = dAt(i);
+          var barPx = bd.bar[di] * cH;
+          var otaPx = bd.ota[di] * cH;
+          var baseY = yAt(0);
+          /* BAR segment (green, bottom) */
+          ctx.fillStyle = '#8BC34A';
+          ctx.fillRect(bx, baseY - barPx, barW, barPx);
+          /* Transient-OTA (light purple, stacked on top) */
+          ctx.fillStyle = '#B39DDB';
+          ctx.fillRect(bx, baseY - barPx - otaPx, barW, otaPx);
         }
-        ctx.lineTo(xAt(DAYS), H - mg.b); ctx.lineTo(xAt(0), H - mg.b); ctx.closePath();
-        ctx.fillStyle = grad; ctx.fill();
 
-        /* lines — draw reversed */
-        function drawLine(pts, color, dash) {
-          ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.75;
-          ctx.setLineDash(dash ? [4, 3] : []);
+        /* Lines */
+        function drawPolyline(pts, color, lw, dash) {
+          ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lw;
+          ctx.setLineDash(dash || []);
           for (var i = 0; i <= DAYS; i++) {
             var x = xAt(i), y = yAt(pts[dAt(i)]);
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
           }
           ctx.stroke(); ctx.setLineDash([]);
         }
-        drawLine(bd.budget, ORANGE, true);
-        drawLine(bd.ly, GREY, false);
-        drawLine(bd.ty, TEAL, false);
+        drawPolyline(bd.cap,      '#F5A623', 1.5, [5, 4]);  /* Adjusted Capacity (gold dashed) */
+        drawPolyline(bd.budget,   '#B0BEC5', 1.5, [5, 4]);  /* Locked Budget (grey dashed)     */
+        drawPolyline(bd.forecast, '#248b86', 1.5, [2, 3]);  /* Demand Forecast (teal dotted)   */
+        drawPolyline(bd.ly,       '#E53935', 2,   []);      /* Final LY (red solid)             */
 
-        /* "now" marker: today is _di days before stay → position i=_di */
-        if (_di > 0 && _di <= DAYS) {
+        /* Today marker (solid vertical line) */
+        if (_di >= 0 && _di <= DAYS) {
           var nx = xAt(_di);
-          ctx.save();
-          ctx.strokeStyle = '#c0c7c9'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
-          ctx.beginPath(); ctx.moveTo(nx, mg.t + 4); ctx.lineTo(nx, H - mg.b); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-          ctx.fillStyle = '#b0bbbf'; ctx.font = '8px Lato,sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText('now', nx, mg.t + 3);
+          ctx.strokeStyle = '#78909C'; ctx.lineWidth = 1; ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(nx, mg.t); ctx.lineTo(nx, H - mg.b); ctx.stroke();
+          ctx.fillStyle = '#78909C'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'left';
+          ctx.fillText('Today', nx + 3, mg.t + 10);
         }
 
-        /* hover crosshair + dots */
+        /* Hover crosshair + dots on LY and Forecast lines */
         if (hoverIdx !== undefined && hoverIdx >= 0 && hoverIdx <= DAYS) {
           var hx = xAt(hoverIdx);
-          ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1; ctx.setLineDash([]);
           ctx.beginPath(); ctx.moveTo(hx, mg.t); ctx.lineTo(hx, H - mg.b); ctx.stroke();
-          [[bd.ty, TEAL], [bd.ly, GREY], [bd.budget, ORANGE]].forEach(function (s) {
+          [[bd.ly, '#E53935'], [bd.forecast, '#248b86']].forEach(function(s) {
             var hy = yAt(s[0][dAt(hoverIdx)]);
-            ctx.beginPath(); ctx.arc(hx, hy, 3.5, 0, Math.PI * 2);
+            ctx.beginPath(); ctx.arc(hx, hy, 3, 0, Math.PI * 2);
             ctx.fillStyle = s[1]; ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
           });
         }
+
+        /* Legend — 2 rows inside canvas bottom */
+        var LEG = [
+          { label: 'Adj. Capacity', color: '#F5A623', sw: 'dash' },
+          { label: 'Locked Budget', color: '#B0BEC5', sw: 'dash' },
+          { label: 'BAR',           color: '#8BC34A', sw: 'fill' },
+          { label: 'Transient–OTA', color: '#B39DDB', sw: 'fill' },
+          { label: 'Demand Fcst',   color: '#248b86', sw: 'dot'  },
+          { label: 'Final LY',      color: '#E53935', sw: 'line' }
+        ];
+        ctx.font = '8.5px Lato,sans-serif';
+
+        function drawLegRow(items, cy) {
+          var total = 0;
+          items.forEach(function(it) { total += 14 + ctx.measureText(it.label).width + 8; });
+          total -= 8;
+          var cx = mg.l + (cW - total) / 2;
+          items.forEach(function(it) {
+            var sy = cy - 1;
+            if (it.sw === 'fill') {
+              ctx.fillStyle = it.color; ctx.fillRect(cx, sy - 4, 10, 6);
+            } else if (it.sw === 'line') {
+              ctx.strokeStyle = it.color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+              ctx.beginPath(); ctx.moveTo(cx, sy); ctx.lineTo(cx + 10, sy); ctx.stroke();
+            } else if (it.sw === 'dash') {
+              ctx.strokeStyle = it.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 2]);
+              ctx.beginPath(); ctx.moveTo(cx, sy); ctx.lineTo(cx + 10, sy); ctx.stroke();
+              ctx.setLineDash([]);
+            } else {
+              ctx.strokeStyle = it.color; ctx.lineWidth = 1.5; ctx.setLineDash([2, 2]);
+              ctx.beginPath(); ctx.moveTo(cx, sy); ctx.lineTo(cx + 10, sy); ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            cx += 12;
+            ctx.fillStyle = '#636e72'; ctx.textAlign = 'left';
+            ctx.fillText(it.label, cx, cy + 2);
+            cx += ctx.measureText(it.label).width + 8;
+          });
+        }
+        drawLegRow(LEG.slice(0, 3), H - mg.b + 36);
+        drawLegRow(LEG.slice(3),    H - mg.b + 52);
       }
 
       /* ═══════════════════════════════════════════════════
          CHART 2 — OPTIMAL RATE FINDER
-         Two lines: Revenue (teal, left axis) + Occupancy (orange, right axis)
+         Revenue (navy, left) + Bookings (green dashed, right)
+         4 annotated vertical markers: STLY, Current, Max Rev, Competitor Avg
          Click on chart → sets override for selected stay date
          ═══════════════════════════════════════════════ */
       var _rDim = null;
+      var ORF_NAVY = '#1E3A7B';
+      var ORF_GRN  = '#52C41A';
 
       function drawRate(hoverIdx) {
         var cv = prepCanvas('chart-rate');
         if (!cv) return;
         var ctx = cv.ctx, W = cv.W, H = cv.H;
-        var mg  = { l: 44, r: 32, t: 16, b: 26 };
+        var mg  = { l: 48, r: 38, t: 12, b: 52 };
         var cW  = W - mg.l - mg.r;
         var cH  = H - mg.t - mg.b;
         _rDim   = { mg: mg, cW: cW, cH: cH, W: W, H: H };
@@ -9027,123 +9090,161 @@
         var rd = _rd;
         if (!rd) return;
 
-        var STEPS   = rd.steps;
-        var maxRev  = Math.max.apply(null, rd.revs) * 1.06;
-        var maxOcc  = Math.max.apply(null, rd.occs); // already ≤ 0.99
+        var STEPS    = rd.steps;
+        var rooms    = HDB[_hotelId] ? HDB[_hotelId].rooms : 180;
+        var maxRev   = Math.max.apply(null, rd.revs) * 1.08;
+        var bookings = rd.occs.map(function(o) { return o * rooms; });
+        var maxBook  = Math.max.apply(null, bookings) * 1.08;
 
-        function xAt(i)    { return mg.l + (i / STEPS) * cW; }
-        function xAtR(r)   { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
-        function yAtRev(v) { return mg.t + (1 - v / maxRev) * cH; }
-        function yAtOcc(o) { return mg.t + (1 - o / maxOcc) * cH; }
-        function rToIdx(r) {
+        function xAt(i)     { return mg.l + (i / STEPS) * cW; }
+        function xAtR(r)    { return mg.l + ((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * cW; }
+        function yAtRev(v)  { return mg.t + (1 - v / maxRev) * cH; }
+        function yAtBook(b) { return mg.t + (1 - b / maxBook) * cH; }
+        function rToIdx(r)  {
           return Math.max(0, Math.min(STEPS,
             Math.round(((r - rd.rates[0]) / (rd.rates[STEPS] - rd.rates[0])) * STEPS)));
         }
 
         ctx.clearRect(0, 0, W, H);
 
-        /* grid */
-        ctx.strokeStyle = GRID; ctx.lineWidth = 1;
+        /* Dashed gridlines */
+        ctx.lineWidth = 1; ctx.strokeStyle = '#e2e6e8'; ctx.setLineDash([3, 3]);
         for (var g = 0; g <= 4; g++) {
           var gy = mg.t + (g / 4) * cH;
           ctx.beginPath(); ctx.moveTo(mg.l, gy); ctx.lineTo(W - mg.r, gy); ctx.stroke();
         }
+        ctx.setLineDash([]);
 
-        /* left y labels — Revenue */
-        ctx.fillStyle = TEAL; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
+        /* Left Y labels — Net Room Revenue */
+        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'right';
         for (var g = 0; g <= 4; g++) {
           var v   = (maxRev * (4 - g)) / 4;
-          var lbl = v >= 10000 ? Math.round(v / 1000) + 'k'
-                  : v >= 1000  ? (Math.round(v / 100) / 10) + 'k'
-                  : Math.round(v);
-          ctx.fillText(rd.cur + lbl, mg.l - 4, mg.t + (g / 4) * cH + 3);
+          var lbl = v >= 10000 ? '$' + Math.round(v / 1000) + 'k'
+                  : v >= 1000  ? '$' + (Math.round(v / 100) / 10) + 'k'
+                  : '$' + Math.round(v);
+          ctx.fillText(lbl, mg.l - 4, mg.t + (g / 4) * cH + 3);
         }
+        ctx.save();
+        ctx.translate(9, mg.t + cH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Net Room Revenue', 0, 0);
+        ctx.restore();
 
-        /* right y labels — Occupancy % */
-        ctx.fillStyle = ORANGE; ctx.textAlign = 'left';
+        /* Right Y labels — Bookings */
+        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'left';
         for (var g = 0; g <= 4; g++) {
-          var pct = Math.round(maxOcc * (4 - g) / 4 * 100);
-          ctx.fillText(pct + '%', W - mg.r + 4, mg.t + (g / 4) * cH + 3);
+          ctx.fillText(Math.round(maxBook * (4 - g) / 4), W - mg.r + 4, mg.t + (g / 4) * cH + 3);
         }
+        ctx.save();
+        ctx.translate(W - 9, mg.t + cH / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = '#636e72'; ctx.font = '8.5px Lato,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Bookings', 0, 0);
+        ctx.restore();
 
-        /* x labels */
-        ctx.fillStyle = LABEL; ctx.textAlign = 'center';
+        /* X-axis labels and "Price" label */
+        ctx.fillStyle = '#636e72'; ctx.font = '9px Lato,sans-serif'; ctx.textAlign = 'center';
         for (var g = 0; g <= 4; g++) {
           var ri = Math.round(g * STEPS / 4);
-          ctx.fillText(rd.cur + Math.round(rd.rates[ri]), mg.l + (g / 4) * cW, H - 7);
+          ctx.fillText(rd.cur + Math.round(rd.rates[ri]), mg.l + (g / 4) * cW, H - mg.b + 12);
         }
+        ctx.fillText('Price', mg.l + cW / 2, H - mg.b + 23);
 
-        /* Revenue area fill */
+        /* Revenue area fill (subtle navy) */
         var grad = ctx.createLinearGradient(0, mg.t, 0, H - mg.b);
-        grad.addColorStop(0, 'rgba(36,139,134,0.10)');
-        grad.addColorStop(1, 'rgba(36,139,134,0.01)');
+        grad.addColorStop(0, 'rgba(30,58,123,0.08)');
+        grad.addColorStop(1, 'rgba(30,58,123,0.01)');
         ctx.beginPath();
-        rd.revs.forEach(function (v, i) {
+        rd.revs.forEach(function(v, i) {
           var x = xAt(i), y = yAtRev(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.lineTo(xAt(STEPS), H - mg.b); ctx.lineTo(xAt(0), H - mg.b); ctx.closePath();
         ctx.fillStyle = grad; ctx.fill();
 
-        /* Revenue line */
-        ctx.beginPath(); ctx.strokeStyle = TEAL; ctx.lineWidth = 2; ctx.setLineDash([]);
-        rd.revs.forEach(function (v, i) {
+        /* Bookings line (green dashed) */
+        ctx.beginPath(); ctx.strokeStyle = ORF_GRN; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+        bookings.forEach(function(b, i) {
+          var x = xAt(i), y = yAtBook(b);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke(); ctx.setLineDash([]);
+
+        /* Revenue line (navy solid) */
+        ctx.beginPath(); ctx.strokeStyle = ORF_NAVY; ctx.lineWidth = 2; ctx.setLineDash([]);
+        rd.revs.forEach(function(v, i) {
           var x = xAt(i), y = yAtRev(v);
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
-        /* Occupancy line */
-        ctx.beginPath(); ctx.strokeStyle = ORANGE; ctx.lineWidth = 2; ctx.setLineDash([]);
-        rd.occs.forEach(function (o, i) {
-          var x = xAt(i), y = yAtOcc(o);
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        /* hover crosshair + dots on both lines */
+        /* Hover crosshair + dots */
         if (hoverIdx !== undefined && hoverIdx >= 0 && hoverIdx <= STEPS) {
           var hx = xAt(hoverIdx);
-          ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 1; ctx.setLineDash([]);
           ctx.beginPath(); ctx.moveTo(hx, mg.t); ctx.lineTo(hx, H - mg.b); ctx.stroke();
-          // Revenue dot
           ctx.beginPath(); ctx.arc(hx, yAtRev(rd.revs[hoverIdx]), 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = TEAL; ctx.fill();
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-          // Occupancy dot
-          ctx.beginPath(); ctx.arc(hx, yAtOcc(rd.occs[hoverIdx]), 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = ORANGE; ctx.fill();
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = ORF_NAVY; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(hx, yAtBook(bookings[hoverIdx]), 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = ORF_GRN; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
 
-        /* marker helper — dot on revenue line + dashed drop + label */
-        function marker(rate, dotFill, dotStroke) {
-          var x  = xAtR(rate);
-          var ri = rToIdx(rate);
-          var y  = yAtRev(rd.revs[ri]);
-          ctx.strokeStyle = dotFill; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.globalAlpha = 0.4;
-          ctx.beginPath(); ctx.moveTo(x, y + 7); ctx.lineTo(x, H - mg.b); ctx.stroke();
+        /* Vertical markers with rotated labels */
+        var MK = [
+          { rate: rd.stlyRate,          color: '#F5A623', label: 'STLY ' + rd.cur + Math.round(rd.stlyRate) },
+          { rate: rd.curRate,           color: '#26C6DA', label: 'Current Rate ' + rd.cur + Math.round(rd.curRate) },
+          { rate: rd.rates[rd.optIdx],  color: '#EC407A', label: 'Max Rev ' + rd.cur + Math.round(rd.rates[rd.optIdx]) },
+          { rate: rd.compAvg,           color: '#AB47BC', label: 'Competitor Avg ' + rd.cur + Math.round(rd.compAvg) }
+        ];
+        MK.forEach(function(mk) {
+          var x = xAtR(mk.rate);
+          if (x < mg.l - 1 || x > W - mg.r + 1) return;
+          /* Dashed vertical line */
+          ctx.strokeStyle = mk.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+          ctx.globalAlpha = 0.75;
+          ctx.beginPath(); ctx.moveTo(x, mg.t); ctx.lineTo(x, H - mg.b); ctx.stroke();
           ctx.globalAlpha = 1; ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
-          ctx.fillStyle = dotFill; ctx.fill();
-          ctx.strokeStyle = dotStroke; ctx.lineWidth = 1.5; ctx.stroke();
-          return x;
-        }
+          /* Circle on revenue curve */
+          var ri  = rToIdx(mk.rate);
+          var ry  = yAtRev(rd.revs[ri]);
+          ctx.beginPath(); ctx.arc(x, ry, 4, 0, Math.PI * 2);
+          ctx.fillStyle = mk.color; ctx.fill();
+          ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+          /* Rotated label (drawn upward from bottom of chart area) */
+          ctx.save();
+          ctx.translate(x + 3, H - mg.b - 2);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillStyle = mk.color; ctx.font = 'bold 7.5px Lato,sans-serif'; ctx.textAlign = 'left';
+          ctx.fillText(mk.label, 0, 0);
+          ctx.restore();
+        });
 
-        var curX = marker('#fff', GREY, '#fff');
-        // Re-draw grey border on current (white fill, grey ring)
-        ctx.beginPath(); ctx.arc(xAtR(rd.curRate), yAtRev(rd.revs[rToIdx(rd.curRate)]), 5, 0, Math.PI * 2);
-        ctx.strokeStyle = GREY; ctx.lineWidth = 2; ctx.stroke();
-
-        marker(rd.recRate, TEAL, '#fff');
-
-        /* marker labels */
-        ctx.font = 'bold 9px Lato,sans-serif'; ctx.textAlign = 'center';
-        ctx.fillStyle = GREY;
-        ctx.fillText(rd.cur + Math.round(rd.curRate), xAtR(rd.curRate), H - 1);
-        ctx.fillStyle = TEAL;
-        ctx.fillText(rd.cur + Math.round(rd.recRate), xAtR(rd.recRate), H - 1);
+        /* Legend at bottom */
+        var LEG_R = [
+          { label: 'Net Room Revenue (Left)', color: ORF_NAVY, sw: 'line' },
+          { label: 'Bookings (Right)',         color: ORF_GRN,  sw: 'dash' }
+        ];
+        ctx.font = '8.5px Lato,sans-serif';
+        var totalW = 0;
+        LEG_R.forEach(function(it) { totalW += 14 + ctx.measureText(it.label).width + 16; });
+        totalW -= 16;
+        var lx = mg.l + (cW - totalW) / 2;
+        var ly = H - mg.b + 38;
+        LEG_R.forEach(function(it) {
+          if (it.sw === 'line') {
+            ctx.strokeStyle = it.color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+            ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 12, ly); ctx.stroke();
+          } else {
+            ctx.strokeStyle = it.color; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+            ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 12, ly); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          lx += 14;
+          ctx.fillStyle = '#636e72'; ctx.textAlign = 'left'; ctx.font = '8.5px Lato,sans-serif';
+          ctx.fillText(it.label, lx, ly + 3);
+          lx += ctx.measureText(it.label).width + 16;
+        });
       }
 
       /* ─ Hover + click setup ─ */
@@ -9163,10 +9264,10 @@
             var di   = DAYS - i; // data array index
             drawBooking(i);
             showTip(e.clientX, e.clientY,
-              '<span style="color:#9fa8ad;font-size:10px">' + i + ' days out</span><br>' +
-              '<span style="color:' + TEAL   + '">&#9679;</span> This Yr: <b>' + Math.round(_bd.ty[di]     * _bd.rooms) + '</b><br>' +
-              '<span style="color:' + GREY   + '">&#9679;</span> Last Yr: <b>' + Math.round(_bd.ly[di]     * _bd.rooms) + '</b><br>' +
-              '<span style="color:' + ORANGE + '">&#8722;&#8722;</span> Budget: <b>' + Math.round(_bd.budget[di] * _bd.rooms) + '</b>'
+              '<span style="color:#9fa8ad;font-size:10px">' + i + ' days before arrival</span><br>' +
+              '<span style="color:#8BC34A">&#9632;</span> BAR: <b>' + Math.round(_bd.bar[di] * _bd.rooms) + '</b><br>' +
+              '<span style="color:#B39DDB">&#9632;</span> Transient–OTA: <b>' + Math.round(_bd.ota[di] * _bd.rooms) + '</b><br>' +
+              '<span style="color:#E53935">&#9679;</span> Final LY: <b>' + Math.round(_bd.ly[di] * _bd.rooms) + '</b>'
             );
           });
           cvB.addEventListener('mouseleave', function () { hideTip(); drawBooking(); });
@@ -9181,13 +9282,14 @@
             if (mx < mg.l || mx > _rDim.W - mg.r) { hideTip(); drawRate(); return; }
             var idx  = Math.max(0, Math.min(_rd.steps, Math.round(((mx - mg.l) / _rDim.cW) * _rd.steps)));
             drawRate(idx);
-            var rate = _rd.rates[idx];
-            var rev  = _rd.revs[idx];
-            var occ  = _rd.occs[idx];
+            var rate  = _rd.rates[idx];
+            var rev   = _rd.revs[idx];
+            var occ   = _rd.occs[idx];
+            var rooms = HDB[_hotelId] ? HDB[_hotelId].rooms : 180;
             showTip(e.clientX, e.clientY,
               '<span style="color:#9fa8ad;font-size:10px">Rate: ' + _rd.cur + Math.round(rate) + ' &middot; click to apply</span><br>' +
-              '<span style="color:' + TEAL   + '">&#9679;</span> Revenue: <b>' + _rd.cur + Math.round(rev).toLocaleString() + '</b><br>' +
-              '<span style="color:' + ORANGE + '">&#9679;</span> Occupancy: <b>' + Math.round(occ * 100) + '%</b>'
+              '<span style="color:' + ORF_NAVY + '">&#9679;</span> Net Room Rev: <b>' + _rd.cur + Math.round(rev).toLocaleString() + '</b><br>' +
+              '<span style="color:' + ORF_GRN  + '">&#9679;</span> Bookings: <b>' + Math.round(occ * rooms) + '</b>'
             );
           });
           cvR.addEventListener('mouseleave', function () { hideTip(); drawRate(); });
