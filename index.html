@@ -633,10 +633,26 @@
     .mc-panel-title {
       flex-shrink: 0;
       font-family: 'Lato', sans-serif;
-      font-size: 14px;
+      padding: 2px 4px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .mc-title-date {
+      font-size: 13px;
       font-weight: 700;
       color: #1c1c1c;
-      padding: 2px 4px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mc-title-ctx {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-sec);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ── Charts panel tab navigation ─────────────────────────── */
@@ -8628,7 +8644,12 @@
         var months = groupMonths(dates);
         var titleEl = document.getElementById('mc-panel-title');
         if (titleEl && dates[selectedCol]) {
-          titleEl.textContent = dates[selectedCol].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+          var dateStr = dates[selectedCol].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+          var navInfo = window.rposNav ? window.rposNav.getSelectedInfo() : null;
+          var ctxStr  = navInfo ? navInfo.hotel + '  ·  ' + navInfo.segment : '';
+          titleEl.innerHTML =
+            '<span class="mc-title-date">' + dateStr + '</span>' +
+            (ctxStr ? '<span class="mc-title-ctx">' + ctxStr + '</span>' : '');
         }
         var colCells = {};
         var hovCol = -1;
