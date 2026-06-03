@@ -724,6 +724,12 @@
       box-shadow: none;
     }
     .rt-ai-pill .mi { font-size: 12px; line-height: 1; }
+    .rt-ai-pill.is-read {
+      background: #b0bec5;
+      color: #78909c;
+      animation: none;
+    }
+    .rt-ai-pill.is-read:hover { background: #90a4ae; }
     /* Tooltip */
     .rt-ai-pill[data-tooltip]::after {
       content: attr(data-tooltip);
@@ -3692,23 +3698,27 @@
 
   function updateTablePills(ids) {
     ids.forEach(function (id) {
-      var pillDate = ALERT_PILL_MAP[id];
-      if (!pillDate) return;
-      var pill = document.querySelector('.alert-pill[data-pill-date="' + pillDate + '"]');
-      if (!pill) return;
       var a = ALL_ALERTS.filter(function (x) { return x.id === id; })[0];
-      if (!a) return;
-      if (a.status === 'read') {
-        pill.style.animationDelay = '';
-        pill.classList.remove('unread');
-        pill.classList.add('read');
-      } else {
-        // Offset the delay so this pill re-joins the animation at the correct
-        // phase relative to the global epoch, staying in sync with all other pills.
-        pill.style.animationDelay = '-' + ((Date.now() - ANIM_EPOCH) % 2000) + 'ms';
-        pill.classList.remove('read');
-        pill.classList.add('unread');
+      /* Legacy .alert-pill in table body */
+      var pillDate = ALERT_PILL_MAP[id];
+      if (pillDate) {
+        var pill = document.querySelector('.alert-pill[data-pill-date="' + pillDate + '"]');
+        if (pill && a) {
+          if (a.status === 'read') {
+            pill.style.animationDelay = '';
+            pill.classList.remove('unread');
+            pill.classList.add('read');
+          } else {
+            pill.style.animationDelay = '-' + ((Date.now() - ANIM_EPOCH) % 2000) + 'ms';
+            pill.classList.remove('read');
+            pill.classList.add('unread');
+          }
+        }
       }
+      /* AI header pills — sync read state without rebuilding the table */
+      document.querySelectorAll('.rt-ai-pill[data-alert-id="' + id + '"]').forEach(function (p) {
+        p.classList.toggle('is-read', !!(a && a.status === 'read'));
+      });
     });
   }
 
@@ -8640,6 +8650,8 @@
               aiPill.type = 'button';
               aiPill.className = 'rt-ai-pill';
               aiPill.setAttribute('data-tooltip', 'View Alert');
+              aiPill.dataset.alertId = alertHit.id;
+              if (alertHit.status === 'read') aiPill.classList.add('is-read');
               var aiIc = document.createElement('span');
               aiIc.className = 'material-icons-round mi';
               aiIc.textContent = 'auto_awesome';
