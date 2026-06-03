@@ -7604,99 +7604,38 @@
   <script>
     /* ── Tree navigation + resize ─────────────────────────────────── */
     (function() {
-      var INDENT = [4, 24, 44, 64];
+      var INDENT = [4, 24, 44];
       var selectedId = 'hbcn-t-r-bar';
 
+      /* Hotel Barcelona segments — hotel level removed per design */
       var tree = [
-        { id:'hbcn', label:'Hotel Barcelona', bold:true, expanded:true, children:[
-          { id:'hbcn-t', label:'Transient', expanded:true, children:[
-            { id:'hbcn-t-r', label:'Retail', expanded:true, children:[
-              { id:'hbcn-t-r-bar', label:'BAR/Leisure', leaf:true },
-              { id:'hbcn-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
-              { id:'hbcn-t-r-ota', label:'OTA Retail', leaf:true }
-            ]},
-            { id:'hbcn-t-d', label:'Discount', expanded:false, children:[
-              { id:'hbcn-t-d-bar', label:'BAR Discount', leaf:true },
-              { id:'hbcn-t-d-mem', label:'Member Discount', leaf:true }
-            ]},
-            { id:'hbcn-t-n', label:'Negotiated', expanded:false, children:[
-              { id:'hbcn-t-n-corp', label:'Corporate Negotiated', leaf:true },
-              { id:'hbcn-t-n-govt', label:'Government Rate', leaf:true }
-            ]}
+        { id:'hbcn-t', label:'Transient', expanded:true, children:[
+          { id:'hbcn-t-r', label:'Retail', expanded:true, children:[
+            { id:'hbcn-t-r-bar', label:'BAR/Leisure', leaf:true },
+            { id:'hbcn-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
+            { id:'hbcn-t-r-ota', label:'OTA Retail', leaf:true }
           ]},
-          { id:'hbcn-g', label:'Group', expanded:false, children:[
-            { id:'hbcn-g-short', label:'Groups - Short Stay', leaf:true },
-            { id:'hbcn-g-long', label:'Groups - Long Stay', leaf:true },
-            { id:'hbcn-g-meet', label:'Meetings', leaf:true }
+          { id:'hbcn-t-d', label:'Discount', expanded:false, children:[
+            { id:'hbcn-t-d-bar', label:'BAR Discount', leaf:true },
+            { id:'hbcn-t-d-mem', label:'Member Discount', leaf:true }
           ]},
-          { id:'hbcn-c', label:'Contract', expanded:false, children:[
-            { id:'hbcn-c-corp', label:'Corporate Contracted', leaf:true },
-            { id:'hbcn-c-pref', label:'Preferred Partner', leaf:true }
-          ]},
-          { id:'hbcn-o', label:'Other Rooms Revenue', expanded:false, children:[
-            { id:'hbcn-o-day', label:'Day Use', leaf:true },
-            { id:'hbcn-o-pkg', label:'Packages', leaf:true }
+          { id:'hbcn-t-n', label:'Negotiated', expanded:false, children:[
+            { id:'hbcn-t-n-corp', label:'Corporate Negotiated', leaf:true },
+            { id:'hbcn-t-n-govt', label:'Government Rate', leaf:true }
           ]}
         ]},
-        { id:'hcam', label:'Hotel Cambridge', bold:true, expanded:false, children:[
-          { id:'hcam-t', label:'Transient', expanded:false, children:[
-            { id:'hcam-t-r', label:'Retail', expanded:false, children:[
-              { id:'hcam-t-r-bar', label:'BAR/Leisure', leaf:true },
-              { id:'hcam-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
-              { id:'hcam-t-r-ota', label:'OTA Retail', leaf:true }
-            ]},
-            { id:'hcam-t-d', label:'Discount', expanded:false, children:[
-              { id:'hcam-t-d-bar', label:'BAR Discount', leaf:true },
-              { id:'hcam-t-d-mem', label:'Member Discount', leaf:true }
-            ]},
-            { id:'hcam-t-n', label:'Negotiated', expanded:false, children:[
-              { id:'hcam-t-n-corp', label:'Corporate Negotiated', leaf:true },
-              { id:'hcam-t-n-govt', label:'Government Rate', leaf:true }
-            ]}
-          ]},
-          { id:'hcam-g', label:'Group', expanded:false, children:[
-            { id:'hcam-g-short', label:'Groups - Short Stay', leaf:true },
-            { id:'hcam-g-long', label:'Groups - Long Stay', leaf:true },
-            { id:'hcam-g-meet', label:'Meetings', leaf:true }
-          ]},
-          { id:'hcam-c', label:'Contract', expanded:false, children:[
-            { id:'hcam-c-corp', label:'Corporate Contracted', leaf:true },
-            { id:'hcam-c-pref', label:'Preferred Partner', leaf:true }
-          ]},
-          { id:'hcam-o', label:'Other Rooms Revenue', expanded:false, children:[
-            { id:'hcam-o-day', label:'Day Use', leaf:true },
-            { id:'hcam-o-pkg', label:'Packages', leaf:true }
-          ]}
+        { id:'hbcn-g', label:'Group', expanded:false, children:[
+          { id:'hbcn-g-short', label:'Groups - Short Stay', leaf:true },
+          { id:'hbcn-g-long', label:'Groups - Long Stay', leaf:true },
+          { id:'hbcn-g-meet', label:'Meetings', leaf:true }
         ]},
-        { id:'hdub', label:'Hotel Dublin', bold:true, expanded:false, children:[
-          { id:'hdub-t', label:'Transient', expanded:false, children:[
-            { id:'hdub-t-r', label:'Retail', expanded:false, children:[
-              { id:'hdub-t-r-bar', label:'BAR/Leisure', leaf:true },
-              { id:'hdub-t-r-lrd', label:'Loyalty Retail Discount', leaf:true },
-              { id:'hdub-t-r-ota', label:'OTA Retail', leaf:true }
-            ]},
-            { id:'hdub-t-d', label:'Discount', expanded:false, children:[
-              { id:'hdub-t-d-bar', label:'BAR Discount', leaf:true },
-              { id:'hdub-t-d-mem', label:'Member Discount', leaf:true }
-            ]},
-            { id:'hdub-t-n', label:'Negotiated', expanded:false, children:[
-              { id:'hdub-t-n-corp', label:'Corporate Negotiated', leaf:true },
-              { id:'hdub-t-n-govt', label:'Government Rate', leaf:true }
-            ]}
-          ]},
-          { id:'hdub-g', label:'Group', expanded:false, children:[
-            { id:'hdub-g-short', label:'Groups - Short Stay', leaf:true },
-            { id:'hdub-g-long', label:'Groups - Long Stay', leaf:true },
-            { id:'hdub-g-meet', label:'Meetings', leaf:true }
-          ]},
-          { id:'hdub-c', label:'Contract', expanded:false, children:[
-            { id:'hdub-c-corp', label:'Corporate Contracted', leaf:true },
-            { id:'hdub-c-pref', label:'Preferred Partner', leaf:true }
-          ]},
-          { id:'hdub-o', label:'Other Rooms Revenue', expanded:false, children:[
-            { id:'hdub-o-day', label:'Day Use', leaf:true },
-            { id:'hdub-o-pkg', label:'Packages', leaf:true }
-          ]}
+        { id:'hbcn-c', label:'Contract', expanded:false, children:[
+          { id:'hbcn-c-corp', label:'Corporate Contracted', leaf:true },
+          { id:'hbcn-c-pref', label:'Preferred Partner', leaf:true }
+        ]},
+        { id:'hbcn-o', label:'Other Rooms Revenue', expanded:false, children:[
+          { id:'hbcn-o-day', label:'Day Use', leaf:true },
+          { id:'hbcn-o-pkg', label:'Packages', leaf:true }
         ]}
       ];
 
@@ -7771,10 +7710,8 @@
       /* Expose selection info for the table IIFE */
       window.rposNav = {
         getSelectedInfo: function() {
-          var hotel = '';
-          for (var i = 0; i < tree.length; i++) {
-            if (containsSelected(tree[i])) { hotel = tree[i].label; break; }
-          }
+          /* Hotel level removed — always Hotel Barcelona */
+          var hotel = 'Hotel Barcelona';
           function findLeaf(nodes) {
             for (var j = 0; j < nodes.length; j++) {
               if (nodes[j].leaf && nodes[j].id === selectedId) return nodes[j].label;
@@ -7782,7 +7719,7 @@
             }
             return '';
           }
-          /* Returns ancestor labels between the hotel root and the leaf */
+          /* Returns labels from top-level segment down to (but not including) the leaf */
           function findAncestors(nodes, acc) {
             for (var j = 0; j < nodes.length; j++) {
               var n = nodes[j];
@@ -7794,11 +7731,15 @@
             }
             return null;
           }
-          var hotelNode = null;
+          /* Find which top-level segment node contains the selection,
+             then build full path including that segment label */
+          var topNode = null;
           for (var i = 0; i < tree.length; i++) {
-            if (containsSelected(tree[i])) { hotelNode = tree[i]; break; }
+            if (containsSelected(tree[i])) { topNode = tree[i]; break; }
           }
-          var ancestors = hotelNode ? findAncestors(hotelNode.children || [], []) : null;
+          var ancestors = topNode
+            ? findAncestors(topNode.children || [], [topNode.label])
+            : null;
           var category = ancestors ? ancestors.join(' / ') : '';
           return { hotel: hotel, segment: findLeaf(tree), category: category };
         },
