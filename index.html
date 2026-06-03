@@ -387,6 +387,22 @@
       pointer-events: none;
     }
 
+    .mc-nav-hotel-label {
+      flex-shrink: 0;
+      padding: 2px 8px 4px 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sec);
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mc-nav-hotel-label .mi { font-size: 13px; flex-shrink: 0; }
+
     .mc-nav-tree-wrap {
       flex: 1;
       min-height: 0;
@@ -2946,6 +2962,10 @@
               </select>
               <span class="material-icons-round mc-nav-select-arrow">arrow_drop_down</span>
             </div>
+          </div>
+          <div class="mc-nav-hotel-label">
+            <span class="material-icons-round mi">apartment</span>
+            Hotel Barcelona
           </div>
           <div class="mc-nav-tree-wrap" id="mc-nav-tree"></div>
         </div>
