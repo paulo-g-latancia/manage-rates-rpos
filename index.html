@@ -639,6 +639,43 @@
       padding: 2px 4px 0;
     }
 
+    /* ── Charts panel tab navigation ─────────────────────────── */
+    .mc-tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--grey-300);
+      flex-shrink: 0;
+      padding: 0 4px;
+      gap: 0;
+    }
+    .mc-tab {
+      padding: 5px 10px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Lato', sans-serif;
+      color: var(--text-sec);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .mc-tab:hover { color: var(--text-primary); }
+    .mc-tab.mc-tab-active {
+      color: #248b86;
+      border-bottom-color: #248b86;
+    }
+    .mc-tab-pane {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .mc-tab-pane-hidden { display: none !important; }
+
     /* ─── RATES TABLE ──────────────────────────────────── */
     .rt-table {
       border-collapse: separate;
@@ -3042,6 +3079,15 @@
         <div class="mc-charts-panel" id="mc-charts-panel">
           <div class="mc-panel-title" id="mc-panel-title"></div>
 
+          <!-- Tab navigation -->
+          <div class="mc-tab-nav">
+            <button class="mc-tab mc-tab-active" data-tab="rate-demand">Rate &amp; Demand</button>
+            <button class="mc-tab" data-tab="restrictions">Restrictions</button>
+          </div>
+
+          <!-- Tab pane: Rate & Demand -->
+          <div class="mc-tab-pane" id="mc-tab-rate-demand">
+
           <!-- Booking Curve -->
           <div class="mc-chart-box">
             <div class="mc-chart-title-row">
@@ -3102,7 +3148,13 @@
             </div>
             <canvas id="chart-rate" style="cursor:pointer"></canvas>
           </div>
-        </div>
+
+          </div><!-- /mc-tab-pane rate-demand -->
+
+          <!-- Tab pane: Restrictions (content coming soon) -->
+          <div class="mc-tab-pane mc-tab-pane-hidden" id="mc-tab-restrictions"></div>
+
+        </div><!-- /mc-charts-panel -->
 
       </div>
     </div><!-- /content-area -->
@@ -9548,7 +9600,11 @@
         drawRate();
       }
 
-      window.rposCharts = { render: render };
+      window.rposCharts = {
+        render: render,
+        /* Re-draw both canvases with current data (no data regeneration). */
+        refresh: function () { drawBooking(); drawRate(); }
+      };
 
       /* ─ Chart header control dropdowns ─ */
       function setupControls() {
@@ -9657,6 +9713,31 @@
         }
       }
     })();
+
+    /* ── Charts panel tab switching ─────────────────────────────── */
+    (function () {
+      var tabs  = document.querySelectorAll('.mc-tab');
+      var panes = document.querySelectorAll('.mc-tab-pane');
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var target = tab.dataset.tab;
+
+          tabs.forEach(function (t) { t.classList.remove('mc-tab-active'); });
+          panes.forEach(function (p) { p.classList.add('mc-tab-pane-hidden'); });
+
+          tab.classList.add('mc-tab-active');
+          var pane = document.getElementById('mc-tab-' + target);
+          if (pane) pane.classList.remove('mc-tab-pane-hidden');
+
+          /* Re-render charts when returning to the Rate & Demand tab so
+             canvases pick up their restored dimensions. */
+          if (target === 'rate-demand' && window.rposCharts) {
+            requestAnimationFrame(function () { window.rposCharts.refresh(); });
+          }
+        });
+      });
+    }());
   </script>
 </body>
 </html>
