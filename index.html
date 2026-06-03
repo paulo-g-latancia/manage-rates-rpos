@@ -707,23 +707,37 @@
       width: 20px;
       height: 20px;
       border-radius: 5px;
-      background: rgba(36,139,134,0.12);
+      background: #248b86;
       border: none;
       cursor: pointer;
       padding: 0;
-      color: #248b86;
+      color: white;
       flex-shrink: 0;
+      position: relative;
       animation: rt-ai-glow 2.5s ease-in-out infinite;
-      transition: background 0.12s, color 0.12s;
+      transition: background 0.12s;
       vertical-align: middle;
     }
     .rt-ai-pill:hover {
-      background: #248b86;
-      color: white;
+      background: #1a6b67;
       animation: none;
       box-shadow: none;
     }
     .rt-ai-pill .mi { font-size: 12px; line-height: 1; }
+    /* Tooltip */
+    .rt-ai-pill[data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(28,28,28,0.88); color: white;
+      padding: 3px 7px; border-radius: 4px;
+      font-size: 11px; white-space: nowrap; font-family: 'Lato',sans-serif;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.1s;
+      z-index: 500;
+    }
+    .rt-ai-pill[data-tooltip]:hover::after { opacity: 1; }
 
     /* Month label sticks to the left edge of its visible cell area */
     .rt-head-month .month-label {
@@ -8625,7 +8639,7 @@
               var aiPill = document.createElement('button');
               aiPill.type = 'button';
               aiPill.className = 'rt-ai-pill';
-              aiPill.title = alertHit.title;
+              aiPill.setAttribute('data-tooltip', 'View Alert');
               var aiIc = document.createElement('span');
               aiIc.className = 'material-icons-round mi';
               aiIc.textContent = 'auto_awesome';
