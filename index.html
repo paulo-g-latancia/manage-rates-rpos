@@ -729,6 +729,7 @@
       padding: 3px 0; position: relative; cursor: default;
     }
     .mc-cal-day.empty { pointer-events: none; }
+    .mc-cal-day:not(.empty) { cursor: pointer; }
     /* ── Horizontal selection band (behind the circle) ─ */
     .mc-cal-day.in-range::before {
       content: ''; position: absolute;
@@ -747,7 +748,20 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 14px; color: var(--text-primary);
       border-radius: 50%; position: relative; z-index: 1;
+      transition: background 0.12s, transform 0.1s;
     }
+    /* Hover states */
+    .mc-cal-day:not(.empty):not(.in-range):hover .mc-cal-day-num {
+      background: var(--grey-200);
+    }
+    .mc-cal-day.in-range:not(.sel-start):not(.sel-end):hover .mc-cal-day-num {
+      background: rgba(36,139,134,0.25);
+    }
+    .mc-cal-day.sel-start:hover .mc-cal-day-num,
+    .mc-cal-day.sel-end:hover   .mc-cal-day-num {
+      background: #1a6b67;
+    }
+    .mc-cal-day:not(.empty):hover .mc-cal-day-num { transform: scale(1.08); }
     .mc-cal-day.is-today .mc-cal-day-num {
       border: 1.5px solid #248b86; color: #248b86; font-weight: 700;
     }
