@@ -704,7 +704,8 @@
     }
     .mc-cal-nav-title {
       flex: 1; text-align: center;
-      font-size: 17px; font-weight: 700; color: var(--text-primary);
+      font-size: 14px; font-weight: 400; color: var(--text-sec);
+      letter-spacing: 0.2px;
     }
     .mc-cal-nav-btn {
       width: 30px; height: 30px; border: none; background: none;
@@ -777,6 +778,23 @@
       font-size: 10px; color: var(--text-sec); line-height: 1.2; margin-top: 1px;
     }
     .mc-cal-day.in-range .mc-cal-day-pct { color: #1a6b67; }
+    /* ── Metric selector ─ */
+    .mc-cal-metric-wrap {
+      position: relative; flex-shrink: 0;
+      margin-top: 12px;
+    }
+    .mc-cal-metric-sel {
+      width: 100%; appearance: none; -webkit-appearance: none;
+      background: white; border: 1px solid var(--grey-300); border-radius: 4px;
+      padding: 8px 32px 8px 10px;
+      font-size: 14px; font-family: 'Lato',sans-serif; color: #1c1c1c;
+      cursor: pointer; outline: none;
+    }
+    .mc-cal-metric-sel:hover { border-color: #9fa8ad; }
+    .mc-cal-metric-arrow {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      font-size: 20px; color: #636e72; pointer-events: none;
+    }
 
     /* ── Restrictions tab ──────────────────────────────── */
     .mc-restr-list {
@@ -3757,6 +3775,26 @@
           </button>
         </div>
         <div id="cal-grid"></div>
+
+        <!-- Metric selector -->
+        <div class="mc-cal-metric-wrap">
+          <select class="mc-cal-metric-sel" id="cal-metric-sel">
+            <option value="occ-commit" selected>Occupancy (Commit)</option>
+            <option value="adr-commit">ADR (Commit)</option>
+            <option value="occ-duetto">Occupancy (Duetto Forecast)</option>
+            <option value="occ-locked">Occupancy (Locked Forecast)</option>
+            <option value="rev-commit">Room Revenue (Commit)</option>
+            <option value="rev-duetto">Room Revenue (Duetto Forecast)</option>
+            <option value="rev-locked">Room Revenue (Locked Forecast)</option>
+            <option value="revpar-commit">RevPar (Commit)</option>
+            <option value="comp-avg">Competitor Average</option>
+            <option value="rate-shopped">My Rate (Shopped)</option>
+            <option value="rate-bar">My Rate (Bar)</option>
+            <option value="rec-rate">Recommended Rate</option>
+            <option value="occ-demand">Occupancy (Demand)</option>
+          </select>
+          <span class="material-icons-round mc-cal-metric-arrow">arrow_drop_down</span>
+        </div>
       </div>
     </div><!-- /cal-panel -->
 
@@ -10308,11 +10346,30 @@
       /* View state */
       var vy = today.getFullYear(), vm = today.getMonth();
 
-      /* Seeded occupancy metric (deterministic per date) */
-      function occ(d) {
+      /* ── Metric definitions ───────────────────────────────── */
+      var METRICS = {
+        'occ-commit':    { fmt: function(v) { return Math.round(v * 28 + 58) + '%';                         }, seed: 11 },
+        'occ-duetto':    { fmt: function(v) { return Math.round(v * 30 + 60) + '%';                         }, seed: 13 },
+        'occ-locked':    { fmt: function(v) { return Math.round(v * 26 + 56) + '%';                         }, seed: 17 },
+        'occ-demand':    { fmt: function(v) { return Math.round(v * 33 + 62) + '%';                         }, seed: 19 },
+        'adr-commit':    { fmt: function(v) { return '€' + Math.round(v * 82 + 155);                        }, seed: 23 },
+        'rev-commit':    { fmt: function(v) { return '€' + (Math.round(v * 18 + 10)) + 'k';                 }, seed: 29 },
+        'rev-duetto':    { fmt: function(v) { return '€' + (Math.round(v * 19 + 11)) + 'k';                 }, seed: 31 },
+        'rev-locked':    { fmt: function(v) { return '€' + (Math.round(v * 17 +  9)) + 'k';                 }, seed: 37 },
+        'revpar-commit': { fmt: function(v) { return '€' + Math.round(v * 58 + 108);                        }, seed: 41 },
+        'comp-avg':      { fmt: function(v) { return '€' + Math.round(v * 72 + 162);                        }, seed: 43 },
+        'rate-shopped':  { fmt: function(v) { return '€' + Math.round(v * 68 + 168);                        }, seed: 47 },
+        'rate-bar':      { fmt: function(v) { return '€' + Math.round(v * 65 + 175);                        }, seed: 53 },
+        'rec-rate':      { fmt: function(v) { return '€' + Math.round(v * 65 + 185);                        }, seed: 59 }
+      };
+
+      var currentMetric = 'occ-commit';
+
+      function metricVal(d) {
+        var m = METRICS[currentMetric] || METRICS['occ-commit'];
         var s = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-        var v = Math.sin(s * 7919) * 10000; v -= Math.floor(v);
-        return Math.round(v * 70 + 15);
+        var v = Math.sin(s * m.seed * 7919) * 10000; v -= Math.floor(v);
+        return m.fmt(v);
       }
 
       function sameDay(a, b) {
@@ -10355,7 +10412,7 @@
 
               html += '<div class="' + cls + '">' +
                 '<div class="mc-cal-day-num">' + day + '</div>' +
-                '<div class="mc-cal-day-pct">' + occ(d) + '%</div>' +
+                '<div class="mc-cal-day-pct">' + metricVal(d) + '</div>' +
               '</div>';
               day++;
             }
@@ -10377,6 +10434,14 @@
       document.getElementById('cal-pm').addEventListener('click', function () { nav( 0, -1); });
       document.getElementById('cal-nm').addEventListener('click', function () { nav( 0,  1); });
       document.getElementById('cal-ny').addEventListener('click', function () { nav( 1,  0); });
+
+      var metricSel = document.getElementById('cal-metric-sel');
+      if (metricSel) {
+        metricSel.addEventListener('change', function () {
+          currentMetric = this.value;
+          render();
+        });
+      }
 
       render();
     }());
