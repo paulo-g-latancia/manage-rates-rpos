@@ -753,7 +753,7 @@
       padding: 3px 0; position: relative; cursor: default;
     }
     .mc-cal-day.empty { pointer-events: none; }
-    .mc-cal-day:not(.empty) { cursor: pointer; }
+    .mc-cal-day:not(.empty) { cursor: default; }
     /* ── Horizontal selection band (behind the circle) ─ */
     .mc-cal-day.in-range::before {
       content: ''; position: absolute;
@@ -10617,35 +10617,7 @@
         });
       }
 
-      /* ── Day-click range selection (two-click: start → end) ── */
-      var clickPhase = 0;   /* 0 = idle, 1 = awaiting second click */
-      var pendingA   = null;
-
-      if (grid) {
-        grid.addEventListener('click', function (e) {
-          var dayEl = e.target.closest('.mc-cal-day:not(.empty)');
-          if (!dayEl) return;
-          var n = parseInt(dayEl.querySelector('.mc-cal-day-num').textContent, 10);
-          if (!n) return;
-          var clicked = new Date(vy, vm, n);
-
-          if (clickPhase === 0) {
-            /* First click — set start; show as single-day selection */
-            pendingA   = clicked;
-            selA = new Date(clicked); selB = new Date(clicked);
-            clickPhase = 1;
-          } else {
-            /* Second click — complete the range */
-            if (clicked >= pendingA) {
-              selA = new Date(pendingA); selB = new Date(clicked);
-            } else {
-              selA = new Date(clicked); selB = new Date(pendingA);
-            }
-            clickPhase = 0; pendingA = null;
-          }
-          render(); updateButtons();
-        });
-      }
+      /* ── Day-click range selection disabled for now ── */
 
       document.getElementById('cal-py').addEventListener('click', function () { nav(-1,  0); });
       document.getElementById('cal-pm').addEventListener('click', function () { nav( 0, -1); });
