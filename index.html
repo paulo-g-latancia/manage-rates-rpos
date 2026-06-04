@@ -720,27 +720,47 @@
     .mc-restr-controls {
       display: flex; align-items: center; gap: 10px;
     }
-    /* Toggle (on = teal) */
+    /* Toggle (on = teal) — knob is a child span so ::after is free for tooltip */
     .mc-restr-toggle {
       width: 32px; height: 18px; border-radius: 9px;
       background: #248b86; position: relative; cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
     }
-    .mc-restr-toggle::after {
-      content: ''; position: absolute;
+    .mc-restr-toggle.is-off { background: #b0bec5; }
+    .mc-restr-knob {
+      display: block; position: absolute;
       width: 14px; height: 14px; border-radius: 50%;
       background: white; top: 2px; right: 2px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      transition: left 0.15s, right 0.15s;
     }
+    .mc-restr-toggle.is-off .mc-restr-knob { right: auto; left: 2px; }
     .mc-restr-icon-btn {
       width: 20px; height: 20px;
       display: inline-flex; align-items: center; justify-content: center;
       border: none; background: none; cursor: pointer;
       color: #9fa8ad; padding: 0; border-radius: 3px;
+      position: relative;
       transition: color 0.12s;
     }
     .mc-restr-icon-btn:hover { color: #636e72; }
     .mc-restr-icon-btn.del:hover { color: #d32f2f; }
     .mc-restr-icon-btn .mi { font-size: 16px; }
+    /* Tooltips for restriction card controls */
+    .mc-restr-toggle[data-tooltip]::after,
+    .mc-restr-icon-btn[data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(28,28,28,0.88); color: white;
+      padding: 3px 7px; border-radius: 4px;
+      font-size: 11px; white-space: nowrap; font-family: 'Lato',sans-serif;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.1s; z-index: 600;
+    }
+    .mc-restr-toggle[data-tooltip]:hover::after,
+    .mc-restr-icon-btn[data-tooltip]:hover::after { opacity: 1; }
     .mc-restr-divider { height: 1px; background: #e0e0e0; flex-shrink: 0; }
     .mc-restr-section { display: flex; flex-direction: column; gap: 4px; }
     .mc-restr-section-lbl {
@@ -8350,9 +8370,9 @@
               '<div class="mc-restr-card-meta">' +
                 '<span class="mc-restr-chip">' + r.type + '</span>' +
                 '<div class="mc-restr-controls">' +
-                  '<div class="mc-restr-toggle"></div>' +
-                  '<button class="mc-restr-icon-btn" title="Edit"><span class="material-icons-round mi">edit</span></button>' +
-                  '<button class="mc-restr-icon-btn del" title="Delete"><span class="material-icons-round mi">delete</span></button>' +
+                  '<div class="mc-restr-toggle" data-tooltip="Turn off"><span class="mc-restr-knob"></span></div>' +
+                  '<button class="mc-restr-icon-btn" data-tooltip="Edit"><span class="material-icons-round mi">edit</span></button>' +
+                  '<button class="mc-restr-icon-btn del" data-tooltip="Delete"><span class="material-icons-round mi">delete</span></button>' +
                 '</div>' +
               '</div>' +
             '</div>' +
@@ -8372,6 +8392,18 @@
         html += '</div>';
         el.innerHTML = html;
       }
+      /* Toggle click — event delegation, wired once */
+      (function () {
+        var pane = document.getElementById('mc-tab-restrictions');
+        if (!pane) return;
+        pane.addEventListener('click', function (e) {
+          var tog = e.target.closest('.mc-restr-toggle');
+          if (!tog) return;
+          e.stopPropagation();
+          var off = tog.classList.toggle('is-off');
+          tog.setAttribute('data-tooltip', off ? 'Turn on' : 'Turn off');
+        });
+      }());
       /* ─────────────────────────────────────────────────────────────── */
 
       var selectedCol = 0;
