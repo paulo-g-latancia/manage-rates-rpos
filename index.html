@@ -774,6 +774,11 @@
       font-size: 11px; padding: 2px 5px; border-radius: 3px; white-space: nowrap;
     }
     .mc-restr-val { font-size: 11px; color: #1c1c1c; white-space: nowrap; }
+    .mc-restr-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; padding: 0 2px;
+    }
+    .mc-restr-toolbar-left { display: flex; align-items: center; gap: 2px; }
     .mc-restr-new-btn {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 5px 10px; font-size: 12px; font-weight: 700;
@@ -8362,7 +8367,14 @@
         var tabBtn = document.querySelector('.mc-tab[data-tab="restrictions"]');
         if (tabBtn) tabBtn.textContent = 'Restrictions (' + count + ')';
 
-        var newBtn = '<button class="mc-restr-new-btn"><span class="material-icons-round mi">add</span>New Restriction</button>';
+        var newBtn =
+          '<div class="mc-restr-toolbar">' +
+            '<div class="mc-restr-toolbar-left">' +
+              '<button class="ap-header-btn" data-tooltip="Filter"><span class="material-icons-round mi">filter_alt</span></button>' +
+              '<button class="ap-header-btn" data-tooltip="Search"><span class="material-icons-round mi">search</span></button>' +
+            '</div>' +
+            '<button class="mc-restr-new-btn"><span class="material-icons-round mi">add</span>New Restriction</button>' +
+          '</div>';
 
         if (count === 0) {
           el.innerHTML = '<div class="mc-restr-list">' + newBtn + '<div class="mc-restr-empty">No restrictions for this stay date.</div></div>';
