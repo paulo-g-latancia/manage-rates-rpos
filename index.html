@@ -799,6 +799,13 @@
       transform: rotate(45deg);
       flex-shrink: 0;
     }
+    .mc-cal-restr-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #f97316;
+      box-shadow: 0 0 0 1.5px white;
+      flex-shrink: 0;
+    }
     /* ── Metric selector ─ */
     .mc-cal-metric-wrap {
       position: relative; flex-shrink: 0;
@@ -10404,6 +10411,12 @@
         var v = Math.sin(s * 4177) * 10000; v -= Math.floor(v);
         return v < 0.18;
       }
+      /* ~85% of days have restrictions (mirrors the restrictions tab distribution) */
+      function hasRestrictions(d) {
+        var s = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+        var v = Math.sin(s * 5381) * 10000; v -= Math.floor(v);
+        return v >= 0.15;
+      }
 
       function sameDay(a, b) {
         return a.getFullYear() === b.getFullYear() &&
@@ -10445,10 +10458,11 @@
 
               html += '<div class="' + cls + '">' +
                 '<div class="mc-cal-day-num">' + day + '</div>' +
-                ((hasEvent(d) || hasNotes(d))
+                ((hasEvent(d) || hasNotes(d) || hasRestrictions(d))
                   ? '<div class="mc-cal-indicators">' +
-                      (hasEvent(d) ? '<div class="mc-cal-event-dot"></div>' : '') +
-                      (hasNotes(d) ? '<div class="mc-cal-notes-dot"></div>' : '') +
+                      (hasEvent(d)        ? '<div class="mc-cal-event-dot"></div>'  : '') +
+                      (hasNotes(d)        ? '<div class="mc-cal-notes-dot"></div>'  : '') +
+                      (hasRestrictions(d) ? '<div class="mc-cal-restr-dot"></div>'  : '') +
                     '</div>'
                   : '') +
                 '<div class="mc-cal-day-pct">' + metricVal(d) + '</div>' +
