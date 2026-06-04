@@ -751,6 +751,10 @@
       border-radius: 50%; position: relative; z-index: 1;
       transition: background 0.12s, transform 0.1s;
     }
+    /* AI alert glow — reuses the same keyframe as the table pill button */
+    .mc-cal-day.has-ai-alert .mc-cal-day-num {
+      animation: rt-ai-glow 1.5s ease-in-out infinite;
+    }
     /* Hover states */
     .mc-cal-day:not(.empty):not(.in-range):hover .mc-cal-day-num {
       background: var(--grey-200);
@@ -10455,6 +10459,7 @@
               if (isStart) cls += ' sel-start';
               if (isEnd)   cls += ' sel-end';
               if (isTod)   cls += ' is-today';
+              if (window.rposAlerts && window.rposAlerts.getHighTierAlertForDate(d)) cls += ' has-ai-alert';
 
               html += '<div class="' + cls + '">' +
                 '<div class="mc-cal-day-num">' + day + '</div>' +
