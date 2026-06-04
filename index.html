@@ -830,7 +830,7 @@
     .mc-cal-leg-nt  { width: 7px; height: 7px; background: #7c3aed; transform: rotate(45deg); }
     .mc-cal-leg-re  { width: 9px; height: 9px; border-radius: 50%; background: #f97316; }
     .mc-cal-leg-ai  { width: 9px; height: 9px; border-radius: 50%; background: #248b86;
-                      animation: rt-ai-glow 1.5s ease-in-out infinite; }
+                      animation: rt-ai-glow 1.5s ease-in-out infinite; /* delay synced via JS */ }
 
     /* ── Metric selector ─ */
     .mc-cal-metric-wrap {
@@ -10537,6 +10537,15 @@
         }
         html += '</div>';
         grid.innerHTML = html;
+
+        /* Sync glow phase: compute one delay and stamp it on every glowing
+           element so calendar circles and the legend swatch pulse together. */
+        var _delay = '-' + (Date.now() % 1500) + 'ms';
+        grid.querySelectorAll('.has-ai-alert .mc-cal-day-num').forEach(function (el) {
+          el.style.animationDelay = _delay;
+        });
+        var _legSw = document.querySelector('.mc-cal-leg-ai');
+        if (_legSw) _legSw.style.animationDelay = _delay;
       }
 
       function nav(dy, dm) {
