@@ -4285,10 +4285,13 @@
       e.stopPropagation();
       if (window.rposPinned.panel && window.rposPinned.panel !== 'alerts') return; // blocked
       if (window.rposPinned.panel === 'alerts') {
-        /* Unpin — keep floating; restore rail active state */
+        /* Unpin — close completely */
         panel.classList.remove('pinned');
         window.rposPinned.panel = null;
-        alertsBtn.classList.add('sp-active');
+        panelOpen = false;
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+        alertsBtn.classList.remove('sp-active');
       } else {
         /* Pin — ensure panel is open, then set rail to idle */
         if (!panelOpen) { panelOpen = true; panel.classList.add('open'); panel.removeAttribute('aria-hidden'); }
@@ -10485,10 +10488,13 @@
           e.stopPropagation();
           if (window.rposPinned && window.rposPinned.panel && window.rposPinned.panel !== 'cal') return; // blocked
           if (window.rposPinned && window.rposPinned.panel === 'cal') {
-            /* Unpin — keep floating; restore rail active state */
+            /* Unpin — close completely */
             calPanel.classList.remove('pinned');
             window.rposPinned.panel = null;
-            calBtn.classList.add('sp-active');
+            calOpen = false;
+            calPanel.classList.remove('open');
+            calPanel.setAttribute('aria-hidden', 'true');
+            calBtn.classList.remove('sp-active');
           } else {
             /* Pin — ensure visible, then set rail to idle */
             if (!calOpen) { openCal(); }
