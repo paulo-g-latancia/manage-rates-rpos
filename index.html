@@ -8275,40 +8275,74 @@
       /* ─── Restrictions tab ───────────────────────────────────────── */
       var RESTRICTIONS_POOL = [
         {
-          title: 'Minimum Length of Stay',   type: 'Min LOS',
-          scope:     [ ['Rate Plan','All Retail'], ['Room Type','All'] ],
-          condition: [ ['Demand Occupancy','> 75%'] ],
+          title: 'Weekend Compression – Min Stay Gate',
+          type: 'Min LOS', chipBg: '#dce8ff', chipText: '#1b4dc0',
+          scope:     [ ['Rate Plan','All Retail'], ['Days','Fri – Sun'] ],
+          condition: [ ['Demand Occupancy','> 72%'] ],
           action:    [ [['Rate Tag','Min LOS'], ['val','= 2 nights']] ]
         },
         {
-          title: 'Closed to Arrival',   type: 'CTA',
+          title: 'City Event LOS Control',
+          type: 'Min LOS', chipBg: '#dce8ff', chipText: '#1b4dc0',
+          scope:     [ ['Rate Plan','BAR / Leisure'], ['Channel','All'] ],
+          condition: [ ['Demand Occupancy','> 85%'] ],
+          action:    [ [['Rate Tag','Min LOS'], ['val','= 3 nights']] ]
+        },
+        {
+          title: 'Long Weekend – No New Arrivals',
+          type: 'CTA', chipBg: '#fff3e0', chipText: '#b45309',
           scope:     [ ['Segment','Transient'], ['Channel','OTA'] ],
           condition: [ ['Occupancy','> 88%'] ],
           action:    [ [['Rate Tag','CTA'], ['val','= Closed']] ]
         },
         {
-          title: 'Non-Refundable Rate',   type: 'Rate Plan',
+          title: 'Peak Pick-Up – Arrival Gate',
+          type: 'CTA', chipBg: '#fff3e0', chipText: '#b45309',
+          scope:     [ ['Segment','All'], ['Rate Plan','Discount'] ],
+          condition: [ ['Pickup','> +8 rooms / day'] ],
+          action:    [ [['Rate Tag','CTA'], ['val','= Closed']] ]
+        },
+        {
+          title: 'Last-Minute Non-Refundable Mandate',
+          type: 'Non-Refundable', chipBg: '#fde8e8', chipText: '#b91c1c',
           scope:     [ ['Rate Plan','Flexible Rate'], ['Days Out','< 7'] ],
-          condition: [ ['Pickup','< 0 rooms/day'] ],
+          condition: [ ['Cancellation Rate','> 15%'] ],
+          action:    [ [['Rate Tag','Policy'], ['val','= Non-refundable']] ]
+        },
+        {
+          title: 'Advance Purchase – No Cancellation',
+          type: 'Non-Refundable', chipBg: '#fde8e8', chipText: '#b91c1c',
+          scope:     [ ['Rate Plan','Advance Purchase'], ['Room Type','All'] ],
+          condition: [ ['Days Out','> 21'] ],
           action:    [ [['Rate Tag','Cancellation'], ['val','= Non-refundable']] ]
         },
         {
-          title: 'Maximum Length of Stay',   type: 'Max LOS',
+          title: 'High-Demand Period Stay Cap',
+          type: 'Max LOS', chipBg: '#f0e8ff', chipText: '#6d28d9',
           scope:     [ ['Rate Plan','All'], ['Segment','Leisure'] ],
           condition: [ ['Demand Occupancy','> 90%'] ],
-          action:    [ [['Rate Tag','Max LOS'], ['val','= 5 nights']] ]
+          action:    [ [['Rate Tag','Max LOS'], ['val','= 4 nights']] ]
         },
         {
-          title: 'Closed to Departure',   type: 'CTD',
-          scope:     [ ['Rate Plan','Discount'], ['Room Type','Suite'] ],
-          condition: [ ['Pickup','> +10 rooms/day'] ],
+          title: 'Weekend Departure Protection',
+          type: 'CTD', chipBg: '#e0f4f2', chipText: '#0d7d6c',
+          scope:     [ ['Rate Plan','BAR'], ['Days','Fri – Sat'] ],
+          condition: [ ['Demand Occupancy','> 78%'] ],
           action:    [ [['Rate Tag','CTD'], ['val','= Closed']] ]
         },
         {
-          title: 'Open Pricing Rule',   type: 'Open Pricing',
+          title: 'Leisure Suite Dynamic Uplift',
+          type: 'Open Pricing', chipBg: '#e6f5ea', chipText: '#276130',
           scope:     [ ['Rate Plan','BAR'], ['Room Type','Junior Suite'] ],
           condition: [ ['Demand Occupancy','> 80%'] ],
           action:    [ [['Rate Tag','Retail'], ['val','='], ['Rate Tag','BAR'], ['val','+ €40.00']] ]
+        },
+        {
+          title: 'Event Week Revenue Multiplier',
+          type: 'Open Pricing', chipBg: '#e6f5ea', chipText: '#276130',
+          scope:     [ ['Rate Plan','All Retail'], ['Room Type','Standard'] ],
+          condition: [ ['Demand Occupancy','> 75%'] ],
+          action:    [ [['Rate Tag','BAR'], ['val','×'], ['Rate Tag','Multiplier'], ['val','= 1.15']] ]
         }
       ];
 
@@ -8368,7 +8402,7 @@
             '<div class="mc-restr-card-hdr">' +
               '<div class="mc-restr-card-title">' + r.title + '</div>' +
               '<div class="mc-restr-card-meta">' +
-                '<span class="mc-restr-chip">' + r.type + '</span>' +
+                '<span class="mc-restr-chip" style="background:' + (r.chipBg||'#e8efff') + ';color:' + (r.chipText||'#1b4dc0') + '">' + r.type + '</span>' +
                 '<div class="mc-restr-controls">' +
                   '<div class="mc-restr-toggle" data-tooltip="Turn off"><span class="mc-restr-knob"></span></div>' +
                   '<button class="mc-restr-icon-btn" data-tooltip="Edit"><span class="material-icons-round mi">edit</span></button>' +
