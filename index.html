@@ -810,6 +810,28 @@
       box-shadow: 0 0 0 1.5px white;
       flex-shrink: 0;
     }
+    /* ── Calendar legend ─ */
+    .mc-cal-legend {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6px; margin-top: 12px; flex-shrink: 0;
+    }
+    .mc-cal-leg-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 10px; border-radius: 4px;
+      border: 1px solid var(--grey-300); background: var(--grey-50);
+      cursor: pointer; font-size: 12px; font-family: 'Lato',sans-serif;
+      color: var(--text-primary); text-align: left;
+      transition: background 0.12s, opacity 0.15s;
+    }
+    .mc-cal-leg-btn:hover { background: var(--grey-100); }
+    .mc-cal-leg-btn.off { opacity: 0.38; }
+    .mc-cal-leg-sw { flex-shrink: 0; }
+    .mc-cal-leg-ev  { width: 9px; height: 9px; border-radius: 2px; background: #1b4dc0; }
+    .mc-cal-leg-nt  { width: 7px; height: 7px; background: #7c3aed; transform: rotate(45deg); }
+    .mc-cal-leg-re  { width: 9px; height: 9px; border-radius: 50%; background: #f97316; }
+    .mc-cal-leg-ai  { width: 9px; height: 9px; border-radius: 50%; background: #248b86;
+                      animation: rt-ai-glow 1.5s ease-in-out infinite; }
+
     /* ── Metric selector ─ */
     .mc-cal-metric-wrap {
       position: relative; flex-shrink: 0;
@@ -3807,6 +3829,22 @@
           </button>
         </div>
         <div id="cal-grid"></div>
+
+        <!-- Indicator legends -->
+        <div class="mc-cal-legend" id="cal-legend">
+          <button class="mc-cal-leg-btn" data-leg="events">
+            <span class="mc-cal-leg-sw mc-cal-leg-ev"></span>Events
+          </button>
+          <button class="mc-cal-leg-btn" data-leg="notes">
+            <span class="mc-cal-leg-sw mc-cal-leg-nt"></span>Notes
+          </button>
+          <button class="mc-cal-leg-btn" data-leg="restrictions">
+            <span class="mc-cal-leg-sw mc-cal-leg-re"></span>Restrictions
+          </button>
+          <button class="mc-cal-leg-btn" data-leg="ai-insights">
+            <span class="mc-cal-leg-sw mc-cal-leg-ai"></span>AI Insights
+          </button>
+        </div>
 
         <!-- Metric selector -->
         <div class="mc-cal-metric-wrap">
@@ -10404,6 +10442,22 @@
         return m.fmt(v);
       }
 
+      /* Legend toggle state */
+      var legOn = { events: true, notes: true, restrictions: true, 'ai-insights': true };
+
+      /* Wire legend button clicks */
+      var legendEl = document.getElementById('cal-legend');
+      if (legendEl) {
+        legendEl.addEventListener('click', function (e) {
+          var btn = e.target.closest('.mc-cal-leg-btn');
+          if (!btn) return;
+          var key = btn.dataset.leg;
+          legOn[key] = !legOn[key];
+          btn.classList.toggle('off', !legOn[key]);
+          render();
+        });
+      }
+
       /* ~22% of days have an event, ~18% have notes (seeded, consistent) */
       function hasEvent(d) {
         var s = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
@@ -10459,15 +10513,19 @@
               if (isStart) cls += ' sel-start';
               if (isEnd)   cls += ' sel-end';
               if (isTod)   cls += ' is-today';
-              if (window.rposAlerts && window.rposAlerts.getHighTierAlertForDate(d)) cls += ' has-ai-alert';
+              if (legOn['ai-insights'] && window.rposAlerts && window.rposAlerts.getHighTierAlertForDate(d)) cls += ' has-ai-alert';
+
+              var showEv = legOn.events        && hasEvent(d);
+              var showNt = legOn.notes         && hasNotes(d);
+              var showRe = legOn.restrictions  && hasRestrictions(d);
 
               html += '<div class="' + cls + '">' +
                 '<div class="mc-cal-day-num">' + day + '</div>' +
-                ((hasEvent(d) || hasNotes(d) || hasRestrictions(d))
+                ((showEv || showNt || showRe)
                   ? '<div class="mc-cal-indicators">' +
-                      (hasEvent(d)        ? '<div class="mc-cal-event-dot"></div>'  : '') +
-                      (hasNotes(d)        ? '<div class="mc-cal-notes-dot"></div>'  : '') +
-                      (hasRestrictions(d) ? '<div class="mc-cal-restr-dot"></div>'  : '') +
+                      (showEv ? '<div class="mc-cal-event-dot"></div>'  : '') +
+                      (showNt ? '<div class="mc-cal-notes-dot"></div>'  : '') +
+                      (showRe ? '<div class="mc-cal-restr-dot"></div>'  : '') +
                     '</div>'
                   : '') +
                 '<div class="mc-cal-day-pct">' + metricVal(d) + '</div>' +
