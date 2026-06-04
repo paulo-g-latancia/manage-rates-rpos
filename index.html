@@ -3067,8 +3067,9 @@
             <div class="mc-nav-selector-box">
               <select class="mc-nav-select" id="mc-nav-select">
                 <option value="segments" selected>Segments</option>
-                <option value="room-types" disabled>Room Types</option>
-                <option value="summary" disabled>Summary</option>
+                <option value="room-types">Room Types</option>
+                <option value="channel">Channel</option>
+                <option value="summary">Summary</option>
               </select>
               <span class="material-icons-round mc-nav-select-arrow">arrow_drop_down</span>
             </div>
@@ -7950,6 +7951,16 @@
 
       if (lNav && lHandle) initResize(lHandle, lNav, 'left');
       if (cPanel && rHandle) initResize(rHandle, cPanel, 'right');
+
+      /* Nav selector: only Segments is functional — all others revert */
+      var navSelect = document.getElementById('mc-nav-select');
+      if (navSelect) {
+        navSelect.addEventListener('change', function () {
+          if (this.value !== 'segments') {
+            this.value = 'segments';
+          }
+        });
+      }
     })();
   </script>
   <script>
