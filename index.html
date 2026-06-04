@@ -342,6 +342,9 @@
       order: 2;
       z-index: auto;
     }
+    /* Hide close button (X) while panel is pinned */
+    .alerts-panel.pinned #ap-close-btn,
+    .cal-panel.pinned    #cal-close-btn { display: none; }
     /* Pin button states */
     .ap-header-btn.is-pinned {
       color: #248b86;
@@ -4282,16 +4285,20 @@
       e.stopPropagation();
       if (window.rposPinned.panel && window.rposPinned.panel !== 'alerts') return; // blocked
       if (window.rposPinned.panel === 'alerts') {
-        /* Unpin — keep floating open */
+        /* Unpin — keep floating; restore rail active state */
         panel.classList.remove('pinned');
         window.rposPinned.panel = null;
+        alertsBtn.classList.add('sp-active');
       } else {
-        /* Pin — ensure panel is open */
-        if (!panelOpen) { panelOpen = true; panel.classList.add('open'); panel.removeAttribute('aria-hidden'); alertsBtn.classList.add('sp-active'); }
+        /* Pin — ensure panel is open, then set rail to idle */
+        if (!panelOpen) { panelOpen = true; panel.classList.add('open'); panel.removeAttribute('aria-hidden'); }
         panel.classList.add('pinned');
         window.rposPinned.panel = 'alerts';
-        /* Close cal panel if floating open */
-        if (window.rposCalPanel && window.rposCalPanel.isOpen()) window.rposCalPanel.close();
+        alertsBtn.classList.remove('sp-active'); // pinned → rail idle
+        /* Close cal panel only if it is floating (not pinned) */
+        if (window.rposCalPanel && window.rposCalPanel.isOpen() && !(window.rposPinned && window.rposPinned.panel === 'cal')) {
+          window.rposCalPanel.close();
+        }
       }
       syncPinButtons();
     });
@@ -4344,7 +4351,11 @@
   alertsBtn.addEventListener('click', function (e) {
     e.stopPropagation();
     if (typeof aiPanelOpen !== 'undefined' && aiPanelOpen) closeAiPanel();
-    if (window.rposCalPanel) window.rposCalPanel.close();
+    /* Only close cal panel if it is floating (not pinned) */
+    if (window.rposCalPanel && !(window.rposPinned && window.rposPinned.panel === 'cal')) {
+      window.rposCalPanel.close();
+    }
+    if (window.rposPinned && window.rposPinned.panel === 'alerts') return; // pinned → rail tap is no-op
     panelOpen ? closePanel() : openPanel();
   });
 
@@ -10474,15 +10485,17 @@
           e.stopPropagation();
           if (window.rposPinned && window.rposPinned.panel && window.rposPinned.panel !== 'cal') return; // blocked
           if (window.rposPinned && window.rposPinned.panel === 'cal') {
-            /* Unpin — keep floating open */
+            /* Unpin — keep floating; restore rail active state */
             calPanel.classList.remove('pinned');
             window.rposPinned.panel = null;
+            calBtn.classList.add('sp-active');
           } else {
-            /* Pin — ensure visible */
+            /* Pin — ensure visible, then set rail to idle */
             if (!calOpen) { openCal(); }
             calPanel.classList.add('pinned');
             window.rposPinned.panel = 'cal';
-            /* Close alerts panel if floating open */
+            calBtn.classList.remove('sp-active'); // pinned → rail idle
+            /* Close alerts panel only if floating (not pinned) */
             var alertsPanel = document.getElementById('alerts-panel');
             if (alertsPanel && alertsPanel.classList.contains('open') && !alertsPanel.classList.contains('pinned')) {
               alertsPanel.classList.remove('open');
