@@ -754,6 +754,15 @@
       font-size: 11px; padding: 2px 5px; border-radius: 3px; white-space: nowrap;
     }
     .mc-restr-val { font-size: 11px; color: #1c1c1c; white-space: nowrap; }
+    .mc-restr-new-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 10px; font-size: 12px; font-weight: 700;
+      font-family: 'Lato',sans-serif; color: #248b86;
+      background: none; border: 1.5px solid #248b86; border-radius: 4px;
+      cursor: pointer; transition: background 0.12s; flex-shrink: 0;
+    }
+    .mc-restr-new-btn:hover { background: rgba(36,139,134,0.07); }
+    .mc-restr-new-btn .mi { font-size: 15px; }
 
     /* ─── RATES TABLE ──────────────────────────────────── */
     .rt-table {
@@ -8287,12 +8296,18 @@
         var el = document.getElementById('mc-tab-restrictions');
         if (!el) return;
 
-        /* Seeded count: ~35% no restrictions, ~30% one, ~25% two, ~10% three */
+        /* Seeded count: ~15% zero, ~40% one, ~30% two, ~15% three */
         var seed  = Math.floor(rnd(dbHash('rc' + di)) * 100);
-        var count = seed < 35 ? 0 : seed < 65 ? 1 : seed < 90 ? 2 : 3;
+        var count = seed < 15 ? 0 : seed < 55 ? 1 : seed < 85 ? 2 : 3;
+
+        /* Update tab label with live count */
+        var tabBtn = document.querySelector('.mc-tab[data-tab="restrictions"]');
+        if (tabBtn) tabBtn.textContent = 'Restrictions (' + count + ')';
+
+        var newBtn = '<button class="mc-restr-new-btn"><span class="material-icons-round mi">add</span>New Restriction</button>';
 
         if (count === 0) {
-          el.innerHTML = '<div class="mc-restr-list"><div class="mc-restr-empty">No restrictions for this stay date.</div></div>';
+          el.innerHTML = '<div class="mc-restr-list">' + newBtn + '<div class="mc-restr-empty">No restrictions for this stay date.</div></div>';
           return;
         }
 
@@ -8327,7 +8342,7 @@
             '</div>';
         }
 
-        var html = '<div class="mc-restr-list">';
+        var html = '<div class="mc-restr-list">' + newBtn;
         items.forEach(function(r) {
           html += '<div class="mc-restr-card">' +
             '<div class="mc-restr-card-hdr">' +
