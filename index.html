@@ -328,6 +328,29 @@
       overflow: hidden;
       position: relative;
     }
+    /* Ordering for pinned panels */
+    .main-layout > .content-area { order: 1; }
+    .main-layout > .side-panel   { order: 3; }
+    /* Pinned panel: leave absolute flow and become a flex column */
+    .alerts-panel.pinned,
+    .cal-panel.pinned {
+      position: relative;
+      top: auto; right: auto; bottom: auto;
+      transform: none;
+      transition: none;
+      box-shadow: none;
+      order: 2;
+      z-index: auto;
+    }
+    /* Pin button states */
+    .ap-header-btn.is-pinned {
+      color: #248b86;
+      background: rgba(36,139,134,0.10);
+    }
+    .ap-header-btn.pin-disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
 
     .content-area {
       flex: 1;
@@ -3514,6 +3537,9 @@
           </button>
           <h2 class="ap-title">AI Assistant</h2>
           <div id="ap-dv-card-header"></div>
+          <button class="ap-header-btn" id="ap-pin-btn" data-tooltip="Pin panel" aria-label="Pin panel">
+            <span class="material-icons-round mi">push_pin</span>
+          </button>
           <button class="ap-header-btn" id="ap-close-btn" aria-label="Close">
             <span class="material-icons-round mi">close</span>
           </button>
@@ -3830,6 +3856,9 @@
       <div class="ap-resize-handle" id="cal-resize-handle"></div>
       <div class="cal-panel-header">
         <h2 class="cal-panel-title">Metrics Calendar</h2>
+        <button class="ap-header-btn" id="cal-pin-btn" data-tooltip="Pin panel" aria-label="Pin panel">
+          <span class="material-icons-round mi">push_pin</span>
+        </button>
         <button class="ap-header-btn" id="cal-close-btn" aria-label="Close">
           <span class="material-icons-round mi">close</span>
         </button>
@@ -4217,7 +4246,64 @@
     document.getElementById('ap-suggestions-menu').classList.remove('open');
   }
 
+  /* ── Shared pin state ──────────────────────────────── */
+  if (!window.rposPinned) window.rposPinned = { panel: null }; // 'alerts' | 'cal' | null
+
+  function syncPinButtons() {
+    var pinBtn    = document.getElementById('ap-pin-btn');
+    var calPinBtn = document.getElementById('cal-pin-btn');
+    var pinned    = window.rposPinned.panel;
+    if (pinBtn) {
+      var alertsPinned = pinned === 'alerts';
+      var otherPinned  = pinned && !alertsPinned;
+      pinBtn.classList.toggle('is-pinned',   alertsPinned);
+      pinBtn.classList.toggle('pin-disabled', otherPinned);
+      pinBtn.setAttribute('data-tooltip',
+        alertsPinned ? 'Unpin panel'
+        : otherPinned ? 'Metrics Calendar is already pinned'
+        : 'Pin panel');
+    }
+    if (calPinBtn) {
+      var calPinned    = pinned === 'cal';
+      var otherPinnedC = pinned && !calPinned;
+      calPinBtn.classList.toggle('is-pinned',   calPinned);
+      calPinBtn.classList.toggle('pin-disabled', otherPinnedC);
+      calPinBtn.setAttribute('data-tooltip',
+        calPinned    ? 'Unpin panel'
+        : otherPinnedC ? 'AI Assistant is already pinned'
+        : 'Pin panel');
+    }
+  }
+
+  /* Alerts pin button */
+  var apPinBtn = document.getElementById('ap-pin-btn');
+  if (apPinBtn) {
+    apPinBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.rposPinned.panel && window.rposPinned.panel !== 'alerts') return; // blocked
+      if (window.rposPinned.panel === 'alerts') {
+        /* Unpin — keep floating open */
+        panel.classList.remove('pinned');
+        window.rposPinned.panel = null;
+      } else {
+        /* Pin — ensure panel is open */
+        if (!panelOpen) { panelOpen = true; panel.classList.add('open'); panel.removeAttribute('aria-hidden'); alertsBtn.classList.add('sp-active'); }
+        panel.classList.add('pinned');
+        window.rposPinned.panel = 'alerts';
+        /* Close cal panel if floating open */
+        if (window.rposCalPanel && window.rposCalPanel.isOpen()) window.rposCalPanel.close();
+      }
+      syncPinButtons();
+    });
+  }
+
   function closePanel() {
+    /* Unpin first if currently pinned */
+    if (window.rposPinned && window.rposPinned.panel === 'alerts') {
+      panel.classList.remove('pinned');
+      window.rposPinned.panel = null;
+      syncPinButtons();
+    }
     panelOpen = false;
     panel.classList.remove('open');
     panel.setAttribute('aria-hidden', 'true');
@@ -4530,7 +4616,8 @@
     // Close entire panel if click outside panel + alerts button,
     // but never when the Apply modal is open (it sits outside the panel DOM)
     if (!panel.contains(e.target) && !alertsBtn.contains(e.target) &&
-        !amOverlay.contains(e.target)) {
+        !amOverlay.contains(e.target) &&
+        !(window.rposPinned && window.rposPinned.panel === 'alerts')) {
       closePanel();
     }
     // Close AI panel if click is outside it and not on the AI button
@@ -10362,17 +10449,67 @@
       }
 
       function closeCal() {
+        /* Unpin first if pinned */
+        if (window.rposPinned && window.rposPinned.panel === 'cal') {
+          calPanel.classList.remove('pinned');
+          window.rposPinned.panel = null;
+          if (typeof syncPinButtons === 'function') syncPinButtons();
+          /* also call alerts-IIFE sync if available */
+          var apPinBtn = document.getElementById('ap-pin-btn');
+          if (apPinBtn) {
+            apPinBtn.classList.remove('pin-disabled');
+            apPinBtn.setAttribute('data-tooltip', 'Pin panel');
+          }
+        }
         calOpen = false;
         calPanel.classList.remove('open');
         calPanel.setAttribute('aria-hidden', 'true');
         calBtn.classList.remove('sp-active');
       }
 
+      /* Cal pin button */
+      var calPinBtn = document.getElementById('cal-pin-btn');
+      if (calPinBtn) {
+        calPinBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (window.rposPinned && window.rposPinned.panel && window.rposPinned.panel !== 'cal') return; // blocked
+          if (window.rposPinned && window.rposPinned.panel === 'cal') {
+            /* Unpin — keep floating open */
+            calPanel.classList.remove('pinned');
+            window.rposPinned.panel = null;
+          } else {
+            /* Pin — ensure visible */
+            if (!calOpen) { openCal(); }
+            calPanel.classList.add('pinned');
+            window.rposPinned.panel = 'cal';
+            /* Close alerts panel if floating open */
+            var alertsPanel = document.getElementById('alerts-panel');
+            if (alertsPanel && alertsPanel.classList.contains('open') && !alertsPanel.classList.contains('pinned')) {
+              alertsPanel.classList.remove('open');
+              alertsPanel.setAttribute('aria-hidden', 'true');
+              var aiBtn = document.getElementById('ai-btn');
+              if (aiBtn) aiBtn.classList.remove('sp-active');
+            }
+          }
+          /* Sync both pin buttons */
+          var pinned = window.rposPinned.panel;
+          var apPinBtn = document.getElementById('ap-pin-btn');
+          if (apPinBtn) {
+            var otherP = pinned === 'cal';
+            apPinBtn.classList.toggle('pin-disabled', otherP);
+            apPinBtn.setAttribute('data-tooltip', otherP ? 'Metrics Calendar is already pinned' : 'Pin panel');
+          }
+          calPinBtn.classList.toggle('is-pinned', pinned === 'cal');
+          calPinBtn.setAttribute('data-tooltip', pinned === 'cal' ? 'Unpin panel' : 'Pin panel');
+        });
+      }
+
       calBtn.addEventListener('click', function (e) {
         e.stopPropagation();
+        if (window.rposPinned && window.rposPinned.panel === 'cal') return; // panel is pinned, rail btn does nothing
         /* Close AI assistant / alerts panels if open */
         var alertsPanel = document.getElementById('alerts-panel');
-        if (alertsPanel && alertsPanel.classList.contains('open')) {
+        if (alertsPanel && alertsPanel.classList.contains('open') && !alertsPanel.classList.contains('pinned')) {
           alertsPanel.classList.remove('open');
           alertsPanel.setAttribute('aria-hidden', 'true');
           var aiBtn = document.getElementById('ai-btn');
@@ -10388,9 +10525,9 @@
         });
       }
 
-      /* Close on outside click */
+      /* Close on outside click (only when not pinned) */
       document.addEventListener('click', function (e) {
-        if (calOpen && !calPanel.contains(e.target) && e.target !== calBtn) {
+        if (calOpen && !calPanel.classList.contains('pinned') && !calPanel.contains(e.target) && e.target !== calBtn) {
           closeCal();
         }
       });
