@@ -692,6 +692,69 @@
     }
     .mc-tab-pane-hidden { display: none !important; }
 
+    /* ── Restrictions tab ──────────────────────────────── */
+    .mc-restr-list {
+      height: 100%; padding: 8px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .mc-restr-empty {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: var(--text-sec); font-size: 12px; font-family: 'Lato',sans-serif;
+      text-align: center; padding: 24px 16px;
+    }
+    .mc-restr-card {
+      background: white; border: 1px solid #dde1e2; border-radius: 4px;
+      padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+      font-family: 'Lato',sans-serif; flex-shrink: 0;
+    }
+    .mc-restr-card-hdr { display: flex; flex-direction: column; gap: 4px; }
+    .mc-restr-card-title { font-size: 14px; font-weight: 700; color: #1c1c1c; }
+    .mc-restr-card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mc-restr-chip {
+      background: #e8efff; color: #1b4dc0;
+      font-size: 12px; padding: 2px 8px; border-radius: 12px;
+      white-space: nowrap;
+    }
+    .mc-restr-controls {
+      display: flex; align-items: center; gap: 10px;
+    }
+    /* Toggle (on = teal) */
+    .mc-restr-toggle {
+      width: 32px; height: 18px; border-radius: 9px;
+      background: #248b86; position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .mc-restr-toggle::after {
+      content: ''; position: absolute;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: white; top: 2px; right: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .mc-restr-icon-btn {
+      width: 20px; height: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: none; background: none; cursor: pointer;
+      color: #9fa8ad; padding: 0; border-radius: 3px;
+      transition: color 0.12s;
+    }
+    .mc-restr-icon-btn:hover { color: #636e72; }
+    .mc-restr-icon-btn.del:hover { color: #d32f2f; }
+    .mc-restr-icon-btn .mi { font-size: 16px; }
+    .mc-restr-divider { height: 1px; background: #e0e0e0; flex-shrink: 0; }
+    .mc-restr-section { display: flex; flex-direction: column; gap: 4px; }
+    .mc-restr-section-lbl {
+      font-size: 10px; color: #585858; letter-spacing: 0.4px; text-transform: uppercase;
+    }
+    .mc-restr-param-row {
+      display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    }
+    .mc-restr-tag {
+      background: #f5f5f5; color: #1c1c1c;
+      font-size: 11px; padding: 2px 5px; border-radius: 3px; white-space: nowrap;
+    }
+    .mc-restr-val { font-size: 11px; color: #1c1c1c; white-space: nowrap; }
+
     /* ─── RATES TABLE ──────────────────────────────────── */
     .rt-table {
       border-collapse: separate;
@@ -8180,6 +8243,122 @@
         }
       }
 
+      /* ─── Restrictions tab ───────────────────────────────────────── */
+      var RESTRICTIONS_POOL = [
+        {
+          title: 'Minimum Length of Stay',   type: 'Min LOS',
+          scope:     [ ['Rate Plan','All Retail'], ['Room Type','All'] ],
+          condition: [ ['Demand Occupancy','> 75%'] ],
+          action:    [ [['Rate Tag','Min LOS'], ['val','= 2 nights']] ]
+        },
+        {
+          title: 'Closed to Arrival',   type: 'CTA',
+          scope:     [ ['Segment','Transient'], ['Channel','OTA'] ],
+          condition: [ ['Occupancy','> 88%'] ],
+          action:    [ [['Rate Tag','CTA'], ['val','= Closed']] ]
+        },
+        {
+          title: 'Non-Refundable Rate',   type: 'Rate Plan',
+          scope:     [ ['Rate Plan','Flexible Rate'], ['Days Out','< 7'] ],
+          condition: [ ['Pickup','< 0 rooms/day'] ],
+          action:    [ [['Rate Tag','Cancellation'], ['val','= Non-refundable']] ]
+        },
+        {
+          title: 'Maximum Length of Stay',   type: 'Max LOS',
+          scope:     [ ['Rate Plan','All'], ['Segment','Leisure'] ],
+          condition: [ ['Demand Occupancy','> 90%'] ],
+          action:    [ [['Rate Tag','Max LOS'], ['val','= 5 nights']] ]
+        },
+        {
+          title: 'Closed to Departure',   type: 'CTD',
+          scope:     [ ['Rate Plan','Discount'], ['Room Type','Suite'] ],
+          condition: [ ['Pickup','> +10 rooms/day'] ],
+          action:    [ [['Rate Tag','CTD'], ['val','= Closed']] ]
+        },
+        {
+          title: 'Open Pricing Rule',   type: 'Open Pricing',
+          scope:     [ ['Rate Plan','BAR'], ['Room Type','Junior Suite'] ],
+          condition: [ ['Demand Occupancy','> 80%'] ],
+          action:    [ [['Rate Tag','Retail'], ['val','='], ['Rate Tag','BAR'], ['val','+ €40.00']] ]
+        }
+      ];
+
+      function renderRestrictions(di) {
+        var el = document.getElementById('mc-tab-restrictions');
+        if (!el) return;
+
+        /* Seeded count: ~35% no restrictions, ~30% one, ~25% two, ~10% three */
+        var seed  = Math.floor(rnd(dbHash('rc' + di)) * 100);
+        var count = seed < 35 ? 0 : seed < 65 ? 1 : seed < 90 ? 2 : 3;
+
+        if (count === 0) {
+          el.innerHTML = '<div class="mc-restr-list"><div class="mc-restr-empty">No restrictions for this stay date.</div></div>';
+          return;
+        }
+
+        /* Pick `count` non-repeating restrictions from the pool */
+        var start  = Math.floor(rnd(dbHash('rp' + di)) * RESTRICTIONS_POOL.length);
+        var items  = [];
+        for (var i = 0; i < count; i++) {
+          items.push(RESTRICTIONS_POOL[(start + i) % RESTRICTIONS_POOL.length]);
+        }
+
+        function buildTag(text) {
+          return '<span class="mc-restr-tag">' + text + '</span>';
+        }
+        function buildVal(text) {
+          return '<span class="mc-restr-val">' + text + '</span>';
+        }
+        function buildRow(pairs) {
+          var inner = '';
+          pairs.forEach(function(p) {
+            inner += p[0] === 'Rate Tag' ? buildTag(p[1]) : buildVal(p[1]);
+          });
+          return '<div class="mc-restr-param-row">' + inner + '</div>';
+        }
+        function buildSection(label, rows) {
+          /* scope / condition rows: each is [param, val] shorthand */
+          var rowsHtml = rows.map(function(r) {
+            return '<div class="mc-restr-param-row">' + buildTag(r[0]) + buildVal('= ' + r[1]) + '</div>';
+          }).join('');
+          return '<div class="mc-restr-section">' +
+            '<div class="mc-restr-section-lbl">' + label + '</div>' +
+            rowsHtml +
+            '</div>';
+        }
+
+        var html = '<div class="mc-restr-list">';
+        items.forEach(function(r) {
+          html += '<div class="mc-restr-card">' +
+            '<div class="mc-restr-card-hdr">' +
+              '<div class="mc-restr-card-title">' + r.title + '</div>' +
+              '<div class="mc-restr-card-meta">' +
+                '<span class="mc-restr-chip">' + r.type + '</span>' +
+                '<div class="mc-restr-controls">' +
+                  '<div class="mc-restr-toggle"></div>' +
+                  '<button class="mc-restr-icon-btn" title="Edit"><span class="material-icons-round mi">edit</span></button>' +
+                  '<button class="mc-restr-icon-btn del" title="Delete"><span class="material-icons-round mi">delete</span></button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="mc-restr-divider"></div>' +
+            buildSection('Scope', r.scope) +
+            '<div class="mc-restr-divider"></div>' +
+            buildSection('Condition', r.condition) +
+            '<div class="mc-restr-divider"></div>' +
+            /* Action rows are already in [type, text] pair format */
+            (function() {
+              var aHtml = '<div class="mc-restr-section"><div class="mc-restr-section-lbl">Action</div>';
+              r.action.forEach(function(row) { aHtml += buildRow(row); });
+              return aHtml + '</div>';
+            }()) +
+          '</div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+      }
+      /* ─────────────────────────────────────────────────────────────── */
+
       var selectedCol = 0;
       var focusOverrideAfterBuild = false;
       var overrideValues = {};
@@ -8662,6 +8841,7 @@
             '<span class="mc-title-date">' + dateStr + '</span>' +
             (ctxStr ? '<span class="mc-title-ctx">' + ctxStr + '</span>' : '');
         }
+        renderRestrictions(selectedCol);
         var colCells = {};
         var hovCol = -1;
         var wrap = document.getElementById('rt-wrap');
