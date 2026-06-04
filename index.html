@@ -1922,6 +1922,40 @@
     }
     .alerts-panel.open { transform: translateX(0); }
 
+    /* ── Metrics Calendar panel ────────────────────────────────── */
+    .cal-panel {
+      position: absolute;
+      top: 0; right: 48px; bottom: 0;
+      width: 480px;
+      background: white;
+      border-left: 1px solid var(--grey-300);
+      box-shadow: -3px 0 16px rgba(0,0,0,0.10);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(calc(100% + 49px));
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cal-panel.open { transform: translateX(0); }
+    .cal-panel-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--grey-300);
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    .cal-panel-title {
+      flex: 1;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* ── Resize handle ── */
     .ap-resize-handle {
       position: absolute;
@@ -3275,7 +3309,7 @@
 
     <!-- ══════════════ RIGHT SIDE PANEL ══════════════ -->
     <aside class="side-panel">
-      <button class="sp-btn" data-tooltip="Metrics Calendar">
+      <button class="sp-btn" id="cal-btn" data-tooltip="Metrics Calendar">
         <span class="material-icons-round mi">calendar_today</span>
       </button>
       <button class="sp-btn" id="ai-btn" data-tooltip="AI Assistant">
@@ -3609,6 +3643,17 @@
       </div>
 
     </div><!-- /ai-panel -->
+
+    <!-- ══════════════ METRICS CALENDAR PANEL ══════════════ -->
+    <div class="cal-panel" id="cal-panel" aria-hidden="true">
+      <div class="cal-panel-header">
+        <h2 class="cal-panel-title">Metrics Calendar</h2>
+        <button class="ap-header-btn" id="cal-close-btn" aria-label="Close">
+          <span class="material-icons-round mi">close</span>
+        </button>
+      </div>
+      <!-- Content placeholder — coming soon -->
+    </div><!-- /cal-panel -->
 
   </div><!-- /main-layout -->
 
@@ -3971,6 +4016,7 @@
   alertsBtn.addEventListener('click', function (e) {
     e.stopPropagation();
     if (typeof aiPanelOpen !== 'undefined' && aiPanelOpen) closeAiPanel();
+    if (window.rposCalPanel) window.rposCalPanel.close();
     panelOpen ? closePanel() : openPanel();
   });
 
@@ -10022,6 +10068,65 @@
         }
       }
     })();
+
+    /* ── Metrics Calendar panel ──────────────────────────────────── */
+    (function () {
+      var calBtn   = document.getElementById('cal-btn');
+      var calPanel = document.getElementById('cal-panel');
+      var calClose = document.getElementById('cal-close-btn');
+      if (!calBtn || !calPanel) return;
+
+      var calOpen = false;
+
+      function openCal() {
+        calOpen = true;
+        calPanel.classList.add('open');
+        calPanel.removeAttribute('aria-hidden');
+        calBtn.classList.add('sp-active');
+        /* Close other panels */
+        if (window.rposCalPanel && window.rposCalPanel._closeAlerts) window.rposCalPanel._closeAlerts();
+      }
+
+      function closeCal() {
+        calOpen = false;
+        calPanel.classList.remove('open');
+        calPanel.setAttribute('aria-hidden', 'true');
+        calBtn.classList.remove('sp-active');
+      }
+
+      calBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        /* Close AI assistant / alerts panels if open */
+        var alertsPanel = document.getElementById('alerts-panel');
+        if (alertsPanel && alertsPanel.classList.contains('open')) {
+          alertsPanel.classList.remove('open');
+          alertsPanel.setAttribute('aria-hidden', 'true');
+          var aiBtn = document.getElementById('ai-btn');
+          if (aiBtn) aiBtn.classList.remove('sp-active');
+        }
+        calOpen ? closeCal() : openCal();
+      });
+
+      if (calClose) {
+        calClose.addEventListener('click', function (e) {
+          e.stopPropagation();
+          closeCal();
+        });
+      }
+
+      /* Close on outside click */
+      document.addEventListener('click', function (e) {
+        if (calOpen && !calPanel.contains(e.target) && e.target !== calBtn) {
+          closeCal();
+        }
+      });
+
+      /* Prevent clicks inside the panel from bubbling */
+      calPanel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+      /* Expose for cross-panel coordination */
+      window.rposCalPanel = { close: closeCal, isOpen: function () { return calOpen; } };
+    }());
 
     /* ── Charts panel tab switching ─────────────────────────────── */
     (function () {
