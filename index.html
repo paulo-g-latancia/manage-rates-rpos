@@ -778,17 +778,26 @@
       font-size: 10px; color: var(--text-sec); line-height: 1.2; margin-top: 1px;
     }
     .mc-cal-day.in-range .mc-cal-day-pct { color: #1a6b67; }
-    /* Event indicator — absolutely positioned, never affects flex layout */
-    .mc-cal-event-dot {
+    /* Indicator badges — shared container, auto-centres 1 or 2 badges */
+    .mc-cal-indicators {
       position: absolute;
+      top: 31px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 3px;
+      z-index: 2; pointer-events: none;
+    }
+    .mc-cal-event-dot {
       width: 6px; height: 6px;
       border-radius: 1.5px;
       background: #1b4dc0;
       box-shadow: 0 0 0 1.5px white;
-      top: 31px;
-      left: 50%; transform: translateX(-50%);
-      z-index: 2;
-      pointer-events: none;
+      flex-shrink: 0;
+    }
+    .mc-cal-notes-dot {
+      width: 5px; height: 5px;
+      background: #7c3aed;
+      box-shadow: 0 0 0 1.5px white;
+      transform: rotate(45deg);
+      flex-shrink: 0;
     }
     /* ── Metric selector ─ */
     .mc-cal-metric-wrap {
@@ -10384,11 +10393,16 @@
         return m.fmt(v);
       }
 
-      /* ~22% of days have an event (seeded, consistent per date) */
+      /* ~22% of days have an event, ~18% have notes (seeded, consistent) */
       function hasEvent(d) {
         var s = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
         var v = Math.sin(s * 3571) * 10000; v -= Math.floor(v);
         return v < 0.22;
+      }
+      function hasNotes(d) {
+        var s = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+        var v = Math.sin(s * 4177) * 10000; v -= Math.floor(v);
+        return v < 0.18;
       }
 
       function sameDay(a, b) {
@@ -10431,7 +10445,12 @@
 
               html += '<div class="' + cls + '">' +
                 '<div class="mc-cal-day-num">' + day + '</div>' +
-                (hasEvent(d) ? '<div class="mc-cal-event-dot"></div>' : '') +
+                ((hasEvent(d) || hasNotes(d))
+                  ? '<div class="mc-cal-indicators">' +
+                      (hasEvent(d) ? '<div class="mc-cal-event-dot"></div>' : '') +
+                      (hasNotes(d) ? '<div class="mc-cal-notes-dot"></div>' : '') +
+                    '</div>'
+                  : '') +
                 '<div class="mc-cal-day-pct">' + metricVal(d) + '</div>' +
               '</div>';
               day++;
