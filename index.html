@@ -8346,12 +8346,16 @@
         }
       ];
 
-      function renderRestrictions(di) {
+      function renderRestrictions(di, selId) {
         var el = document.getElementById('mc-tab-restrictions');
         if (!el) return;
 
-        /* Seeded count: ~15% zero, ~40% one, ~30% two, ~15% three */
-        var seed  = Math.floor(rnd(dbHash('rc' + di)) * 100);
+        /* Segment name from the active nav selection */
+        var navInfo = window.rposNav ? window.rposNav.getSelectedInfo() : null;
+        var segName = navInfo && navInfo.segment ? navInfo.segment : 'All Segments';
+
+        /* Seeded count — varies by both column AND selected segment */
+        var seed  = Math.floor(rnd(dbHash('rc' + di + (selId || ''))) * 100);
         var count = seed < 15 ? 0 : seed < 55 ? 1 : seed < 85 ? 2 : 3;
 
         /* Update tab label with live count */
@@ -8365,8 +8369,8 @@
           return;
         }
 
-        /* Pick `count` non-repeating restrictions from the pool */
-        var start  = Math.floor(rnd(dbHash('rp' + di)) * RESTRICTIONS_POOL.length);
+        /* Pick `count` non-repeating restrictions — also varies by segment */
+        var start  = Math.floor(rnd(dbHash('rp' + di + (selId || ''))) * RESTRICTIONS_POOL.length);
         var items  = [];
         for (var i = 0; i < count; i++) {
           items.push(RESTRICTIONS_POOL[(start + i) % RESTRICTIONS_POOL.length]);
@@ -8411,7 +8415,7 @@
               '</div>' +
             '</div>' +
             '<div class="mc-restr-divider"></div>' +
-            buildSection('Scope', r.scope) +
+            buildSection('Scope', [['Segment', segName]].concat(r.scope)) +
             '<div class="mc-restr-divider"></div>' +
             buildSection('Condition', r.condition) +
             '<div class="mc-restr-divider"></div>' +
@@ -8922,7 +8926,7 @@
             '<span class="mc-title-date">' + dateStr + '</span>' +
             (ctxStr ? '<span class="mc-title-ctx">' + ctxStr + '</span>' : '');
         }
-        renderRestrictions(selectedCol);
+        renderRestrictions(selectedCol, selId);
         var colCells = {};
         var hovCol = -1;
         var wrap = document.getElementById('rt-wrap');
