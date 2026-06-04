@@ -3646,6 +3646,7 @@
 
     <!-- ══════════════ METRICS CALENDAR PANEL ══════════════ -->
     <div class="cal-panel" id="cal-panel" aria-hidden="true">
+      <div class="ap-resize-handle" id="cal-resize-handle"></div>
       <div class="cal-panel-header">
         <h2 class="cal-panel-title">Metrics Calendar</h2>
         <button class="ap-header-btn" id="cal-close-btn" aria-label="Close">
@@ -10071,12 +10072,44 @@
 
     /* ── Metrics Calendar panel ──────────────────────────────────── */
     (function () {
-      var calBtn   = document.getElementById('cal-btn');
-      var calPanel = document.getElementById('cal-panel');
-      var calClose = document.getElementById('cal-close-btn');
+      var calBtn    = document.getElementById('cal-btn');
+      var calPanel  = document.getElementById('cal-panel');
+      var calClose  = document.getElementById('cal-close-btn');
+      var calHandle = document.getElementById('cal-resize-handle');
       if (!calBtn || !calPanel) return;
 
       var calOpen = false;
+
+      /* ── Restore persisted width ── */
+      (function () {
+        var saved = parseInt(localStorage.getItem('cal-panel-width'), 10);
+        if (saved && saved >= 320 && saved <= 820) calPanel.style.width = saved + 'px';
+      }());
+
+      /* ── Drag-to-resize ── */
+      if (calHandle) {
+        calHandle.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          calHandle.classList.add('dragging');
+          document.body.classList.add('ap-resizing');
+          calPanel.style.transition = 'none';
+          function onMove(ev) {
+            var newW = (window.innerWidth - 48) - ev.clientX;
+            newW = Math.max(320, Math.min(820, newW));
+            calPanel.style.width = newW + 'px';
+          }
+          function onUp() {
+            calHandle.classList.remove('dragging');
+            document.body.classList.remove('ap-resizing');
+            calPanel.style.transition = '';
+            localStorage.setItem('cal-panel-width', parseInt(calPanel.style.width, 10));
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
 
       function openCal() {
         calOpen = true;
